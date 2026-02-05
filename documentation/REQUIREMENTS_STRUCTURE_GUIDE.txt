@@ -1,0 +1,529 @@
+═══════════════════════════════════════════════════════════════════════════
+REQUIREMENTS DOCUMENT IMPROVEMENTS GUIDE
+How the New Structure Improves Upon the Original
+═══════════════════════════════════════════════════════════════════════════
+
+OVERVIEW
+════════
+
+This document explains the improvements made to the requirements documentation
+and provides guidance on using the new structured format.
+
+ORIGINAL vs. NEW STRUCTURE
+═══════════════════════════
+
+Original Format:
+────────────────
+* Bullet points with sub-bullets
+* No requirement IDs
+* Mixed levels of detail
+* Updates added as addendums
+* No formal structure
+* Difficult to reference specific requirements
+
+New Format (SRS):
+─────────────────
+✓ Hierarchical requirement IDs (REQ-XXX)
+✓ Formal document structure (IEEE 830-based)
+✓ Clear separation of functional/non-functional requirements
+✓ Acceptance criteria for each requirement
+✓ Priority levels assigned
+✓ Traceability matrix
+✓ Professional presentation
+
+IMPROVEMENTS IN DETAIL
+═══════════════════════
+
+1. REQUIREMENT IDENTIFICATION
+──────────────────────────────
+
+OLD:
+  * it shall receive serial data sent by test via serial to the PC
+  -- data will be received approximately every 0.1 to 1.0 s
+
+NEW:
+  REQ-001: Serial Communication [MUST]
+    REQ-001.1: Data Reception Rate [MUST]
+
+Benefits:
+- Easy to reference ("See REQ-001.1")
+- Hierarchical organization
+- Clear parent-child relationships
+- Traceability to implementation and tests
+
+
+2. ACCEPTANCE CRITERIA
+──────────────────────
+
+OLD:
+  -- data will be received approximately every 0.1 to 1.0 s
+
+NEW:
+  Acceptance Criteria:
+  - System handles data arriving every 0.1 seconds (10 Hz)
+  - System handles data arriving every 1.0 seconds (1 Hz)
+  - System handles variable data rates within this range
+  - No data loss occurs at any supported rate
+  
+  Test Method:
+  - Connect with mock data at 10 Hz → Verify all data received
+  - Connect with mock data at 1 Hz → Verify all data received
+
+Benefits:
+- Objective pass/fail criteria
+- Testable conditions
+- Clear verification methods
+- No ambiguity
+
+
+3. PRIORITY LEVELS
+──────────────────
+
+OLD:
+  (No priorities specified)
+
+NEW:
+  REQ-001: Serial Communication [MUST]
+  REQ-002.5: User-Requested Save [SHOULD]
+
+Priorities:
+  [MUST]   - Critical, system cannot function without it
+  [SHOULD] - Important, significant value
+  [COULD]  - Desirable, nice to have
+
+Benefits:
+- Clear prioritization for development
+- Resource allocation guidance
+- Trade-off decision support
+- Risk management
+
+
+4. FUNCTIONAL vs. NON-FUNCTIONAL SEPARATION
+────────────────────────────────────────────
+
+OLD:
+  (All requirements mixed together)
+
+NEW:
+  Section 3: Functional Requirements
+    - What the system does
+    - Features and capabilities
+  
+  Section 4: Non-Functional Requirements
+    - How well the system performs
+    - Quality attributes
+    - Constraints
+
+Benefits:
+- Clearer organization
+- Different stakeholder audiences
+- Different testing approaches
+- Better understanding of system qualities
+
+
+5. STRUCTURED DATA SPECIFICATIONS
+──────────────────────────────────
+
+OLD:
+  DTA;31422;182;263;0;793;2238;0;611;0;!
+  1. DTA; Test is running...
+  2. 31422; no of cycles
+  ...
+
+NEW:
+  Section 5.1: Serial Data Format
+  
+  Field 3: Position 1
+    Type: Integer (represents mm with implied decimals)
+    Description: Position 1 in millimeters
+    Conversion: Divide by 100 to get actual mm
+    Example: 182 → 1.82 mm
+
+Benefits:
+- Formal specification style
+- Clear conversion rules
+- Examples provided
+- Consistent format
+- Easy reference
+
+
+6. REQUIREMENTS TRACEABILITY
+─────────────────────────────
+
+OLD:
+  (No traceability)
+
+NEW:
+  Section 7.1: Requirements Traceability Matrix
+  
+  Requirement         Module                Test Case       Status
+  ──────────────────────────────────────────────────────────────────
+  REQ-001            serial_reader.py       TC-001          Implemented
+  REQ-001.1          serial_reader.py       TC-001.1        Implemented
+
+Benefits:
+- Links requirements to code
+- Links requirements to tests
+- Implementation status tracking
+- Impact analysis for changes
+- Completeness verification
+
+
+7. VERSION CONTROL
+──────────────────
+
+OLD:
+  "update 05 feb 2026" annotations
+
+NEW:
+  Document Information:
+    Document Version:    2.0
+    Date:                February 5, 2026
+    Status:              Approved
+  
+  Section 7.2: Change Log
+    Detailed list of all changes with rationale
+
+Benefits:
+- Formal version tracking
+- Approval workflow
+- Change history
+- Rationale documented
+- Professional presentation
+
+
+8. DOCUMENT STRUCTURE
+─────────────────────
+
+OLD:
+  Flat list of requirements
+
+NEW:
+  1. Introduction
+     1.1 Purpose
+     1.2 Scope
+     1.3 Definitions
+     ...
+  2. Overall Description
+  3. Functional Requirements
+  4. Non-Functional Requirements
+  5. Data Specifications
+  6. Interface Requirements
+  7. Appendices
+
+Benefits:
+- Easy navigation
+- Progressive detail
+- Standard format (IEEE 830-based)
+- Professional presentation
+- Comprehensive coverage
+
+
+USING THE NEW FORMAT
+════════════════════
+
+For Project Managers:
+─────────────────────
+- Use requirement IDs for tracking (REQ-XXX)
+- Reference traceability matrix for status
+- Use priority levels for planning
+- Review change log for impact assessment
+
+For Developers:
+───────────────
+- Find your module in traceability matrix
+- Read detailed acceptance criteria
+- Check data format specifications
+- Implement to meet test methods
+
+For Testers:
+────────────
+- Use acceptance criteria as test basis
+- Reference test methods provided
+- Create test cases mapped to requirement IDs
+- Verify against specifications
+
+For Stakeholders:
+─────────────────
+- Read Section 2 for overview
+- Review functional requirements (Section 3)
+- Check non-functional requirements (Section 4)
+- Approve based on acceptance criteria
+
+For Maintenance:
+────────────────
+- Use traceability matrix to find code
+- Reference data specifications
+- Check change log for history
+- Update matrix when modifying code
+
+NAVIGATING THE DOCUMENTS
+═════════════════════════
+
+Three Documents Provided:
+─────────────────────────
+
+1. SOFTWARE_REQUIREMENTS_SPECIFICATION_V2.txt (Full Document)
+   - Complete, formal specification
+   - All details, criteria, methods
+   - 50+ pages
+   - Use for: Complete reference, formal review, development
+
+2. REQUIREMENTS_QUICK_REF.txt (Quick Reference)
+   - 2-page summary
+   - Requirement IDs with brief descriptions
+   - Key data formats
+   - Use for: Quick lookup, daily reference, meetings
+
+3. This Guide (REQUIREMENTS_STRUCTURE_GUIDE.txt)
+   - Explains improvements
+   - Usage guidance
+   - Navigation tips
+   - Use for: Understanding format, training, onboarding
+
+When to Use Each:
+─────────────────
+
+Quick Question?
+  → Use REQUIREMENTS_QUICK_REF.txt
+
+Need Acceptance Criteria?
+  → Use SOFTWARE_REQUIREMENTS_SPECIFICATION_V2.txt Section 3
+
+Need Data Format Details?
+  → Use SOFTWARE_REQUIREMENTS_SPECIFICATION_V2.txt Section 5
+
+Want to Understand Structure?
+  → Use this guide
+
+Starting Development?
+  → Read Section 2 (Overview) + Your module's requirements
+
+Doing Testing?
+  → Read Acceptance Criteria + Test Methods for each requirement
+
+Project Review?
+  → Read Section 1 (Introduction) + Section 3 (Functional Requirements)
+
+REQUIREMENT ID SCHEME
+══════════════════════
+
+Format: REQ-XXX.Y
+
+Where:
+  REQ     = Requirement prefix
+  XXX     = High-level requirement number (001-999)
+  .Y      = Sub-requirement number (1-99)
+
+Examples:
+  REQ-001       Top-level requirement (Serial Communication)
+  REQ-001.1     Sub-requirement (Data Reception Rate)
+  REQ-001.2     Sub-requirement (Serial Parameter Configuration)
+
+Non-Functional Requirements:
+  REQ-NFR-XXX   Non-functional requirement
+
+Benefits:
+- Clear hierarchy
+- Unlimited expansion
+- Easy sorting
+- Memorable IDs
+
+ACCEPTANCE CRITERIA WRITING
+════════════════════════════
+
+Good Acceptance Criteria:
+─────────────────────────
+✓ Objective (measurable)
+✓ Testable (can verify)
+✓ Clear (no ambiguity)
+✓ Complete (covers all aspects)
+
+Example - GOOD:
+  Acceptance Criteria:
+  - Plot updates complete within 100 ms
+  - No GUI freezing during updates
+  - Smooth operation with 10,000+ data points
+
+Example - BAD:
+  Acceptance Criteria:
+  - Plots should be fast
+  - GUI should work well
+
+The good example is:
+- Measurable (100 ms, 10,000 points)
+- Testable (can measure time, count points)
+- Clear (specific conditions)
+
+TEST METHOD SPECIFICATION
+══════════════════════════
+
+Each requirement includes suggested test method:
+
+Example:
+  Test Method:
+  - Run test with 10,000+ points
+  - Verify all points visible in plots
+  - Verify no old data dropped
+  - Monitor memory usage remains reasonable
+
+Benefits:
+- Guides test creation
+- Ensures testability
+- Defines verification approach
+- Reduces interpretation differences
+
+MAINTAINING THE REQUIREMENTS
+═════════════════════════════
+
+When Adding New Requirements:
+──────────────────────────────
+1. Assign next available REQ-XXX ID
+2. Write clear description
+3. Define acceptance criteria
+4. Specify test method
+5. Assign priority level
+6. Update traceability matrix
+7. Update change log
+
+When Modifying Requirements:
+────────────────────────────
+1. Update requirement text
+2. Update acceptance criteria if needed
+3. Update test method if needed
+4. Add entry to change log
+5. Update document version
+6. Update traceability matrix if module changed
+7. Review dependent requirements
+
+When Retiring Requirements:
+───────────────────────────
+1. Mark as "Deprecated" in traceability matrix
+2. Add entry to change log
+3. Keep in document for history
+4. Note replacement requirement if applicable
+
+BENEFITS SUMMARY
+════════════════
+
+Improved Clarity:
+─────────────────
+✓ Clear requirement IDs
+✓ Hierarchical organization
+✓ Formal structure
+✓ No ambiguity
+
+Better Traceability:
+────────────────────
+✓ Requirements → Code → Tests
+✓ Impact analysis possible
+✓ Completeness verification
+✓ Status tracking
+
+Enhanced Testing:
+─────────────────
+✓ Objective acceptance criteria
+✓ Defined test methods
+✓ Clear pass/fail conditions
+✓ Comprehensive coverage
+
+Professional Presentation:
+──────────────────────────
+✓ Industry-standard format (IEEE 830-based)
+✓ Suitable for formal review
+✓ Easy to maintain
+✓ Scalable structure
+
+Easier Maintenance:
+───────────────────
+✓ Change log tracking
+✓ Version control
+✓ Clear document history
+✓ Impact assessment support
+
+Better Communication:
+─────────────────────
+✓ Unambiguous reference (REQ-XXX)
+✓ Different views for different audiences
+✓ Quick reference available
+✓ Complete details available
+
+COMPARISON CHECKLIST
+════════════════════
+
+Does your requirements document have:
+
+□ Requirement IDs for easy reference
+□ Hierarchical organization
+□ Acceptance criteria for each requirement
+□ Priority levels assigned
+□ Functional/non-functional separation
+□ Test methods specified
+□ Traceability matrix
+□ Data format specifications
+□ Interface requirements
+□ Change log
+□ Version control
+□ Document approval section
+
+If you checked all boxes, you have a professional, maintainable requirements
+document!
+
+GETTING STARTED
+═══════════════
+
+New to the Project:
+───────────────────
+1. Read Section 1 (Introduction) of full SRS
+2. Read Section 2 (Overall Description) of full SRS
+3. Keep REQUIREMENTS_QUICK_REF.txt handy for daily use
+4. Bookmark your relevant requirements in Section 3
+
+Starting Development:
+─────────────────────
+1. Find your module in traceability matrix
+2. Read all requirements for your module
+3. Note acceptance criteria - these are your goals
+4. Use test methods to guide unit testing
+
+Starting Testing:
+─────────────────
+1. Create test case for each requirement
+2. Use acceptance criteria as basis
+3. Follow test methods provided
+4. Map test cases to requirement IDs
+
+Reviewing the System:
+─────────────────────
+1. Check traceability matrix for completeness
+2. Verify all requirements have status
+3. Review acceptance criteria for clarity
+4. Check test coverage
+
+═══════════════════════════════════════════════════════════════════════════
+
+CONCLUSION
+══════════
+
+The new structured requirements format provides:
+
+✓ Professional, industry-standard documentation
+✓ Clear traceability from requirements to implementation
+✓ Objective acceptance criteria for verification
+✓ Easy reference and navigation
+✓ Maintainable, scalable structure
+✓ Complete coverage of all aspects
+
+This format makes the requirements:
+- Easier to understand
+- Easier to implement
+- Easier to test
+- Easier to maintain
+- Easier to reference
+
+The investment in proper requirements structure pays off throughout the
+project lifecycle!
+
+═══════════════════════════════════════════════════════════════════════════
+END OF REQUIREMENTS STRUCTURE GUIDE
+═══════════════════════════════════════════════════════════════════════════

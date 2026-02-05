@@ -1,0 +1,246 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║              REQUIREMENTS QUICK REFERENCE                                 ║
+║         Fatigue Tester Data Acquisition System V2                         ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+DOCUMENT: SOFTWARE_REQUIREMENTS_SPECIFICATION_V2.txt
+
+This is a quick lookup guide. See full document for complete details.
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│ FUNCTIONAL REQUIREMENTS SUMMARY                                           │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│ REQ-001: Serial Data Acquisition                                          │
+│   001.1  Data reception at 0.1-1.0s intervals                            │
+│   001.2  Configurable serial parameters                                   │
+│   001.3  Connect/Disconnect controls                                      │
+│   001.4  Buffered data reception                                          │
+│                                                                           │
+│ REQ-002: Data Logging                                                     │
+│   002.1  Automatic CSV file creation with timestamps                      │
+│   002.2  No overwriting of existing files                                 │
+│   002.3  Standard CSV format                                              │
+│   002.4  Complete data logging (no gaps)                                  │
+│   002.5  User-requested save with custom name                             │
+│                                                                           │
+│ REQ-003: Live Data Plotting                                               │
+│   003.1  Plot 1: Forces (Lower + Upper)                                   │
+│   003.2  Plot 2: Travel measurements (3 traces)                           │
+│   003.3  Plot 3: Loss of Stiffness %                                      │
+│   003.4  Auto-ranging axes                                                │
+│   003.5  1 Hz update rate                                                 │
+│   003.6  Support for negative values                                      │
+│   003.7  Unlimited data points                                            │
+│   003.8  User controls (update rate, auto-range, clear)                   │
+│                                                                           │
+│ REQ-004: User Interface                                                   │
+│   004.1  Connection controls                                              │
+│   004.2  Data logging controls                                            │
+│   004.3  Help menu with documentation                                     │
+│   004.4  Version menu                                                     │
+│   004.5  Statistics display                                               │
+│   004.6  Status log                                                       │
+│                                                                           │
+│ REQ-005: Data Processing                                                  │
+│   005.1  Parse 11-field serial format                                     │
+│   005.2  Data validation                                                  │
+│   005.3  Parse error handling                                             │
+│   005.4  Loss of Stiffness calculation                                    │
+│   005.5  Error code interpretation                                        │
+└───────────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│ NON-FUNCTIONAL REQUIREMENTS SUMMARY                                       │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│ Performance                                                               │
+│   NFR-001  Handle 10 Hz data rate without loss                           │
+│   NFR-002  Plot updates < 100ms                                           │
+│   NFR-003  Startup within 5 seconds                                       │
+│                                                                           │
+│ Safety                                                                    │
+│   NFR-004  No data corruption or loss                                     │
+│   NFR-005  Detect and report all errors                                   │
+│                                                                           │
+│ Quality                                                                   │
+│   NFR-007  MTBF > 100 hours                                               │
+│   NFR-008  Usable within 5 minutes                                        │
+│   NFR-009  Maintainable modular design                                    │
+│   NFR-010  Multi-platform support                                         │
+│                                                                           │
+│ Other                                                                     │
+│   NFR-011  Mock data mode for testing                                     │
+└───────────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│ DATA FORMAT SPECIFICATION                                                 │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│ Serial Data Format:                                                       │
+│   DTA;31422;182;263;0;793;2238;0;611;0;!                                 │
+│                                                                           │
+│ Fields:                                                                   │
+│   1.  Status (DTA/END)                                                    │
+│   2.  Cycles (integer)                                                    │
+│   3.  Position 1 (int ÷ 100 = mm)                                         │
+│   4.  Force Lower (int ÷ 10 = N)                                          │
+│   5.  Travel 1 (int ÷ 100 = mm, can be negative)                          │
+│   6.  Position 2 (int ÷ 100 = mm)                                         │
+│   7.  Force Upper (int ÷ 10 = N)                                          │
+│   8.  Travel 2 (int ÷ 100 = mm, can be negative)                          │
+│   9.  Travel at Upper (int ÷ 100 = mm)                                    │
+│   10. Error Code (integer 0-999)                                          │
+│   11. End Marker (!)                                                      │
+│                                                                           │
+│ Loss of Stiffness Calculation:                                            │
+│   Formula: (Travel 2 / Travel at Upper) × 100%                            │
+│   If Travel at Upper = 0, return 0%                                       │
+└───────────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│ CSV OUTPUT FORMAT                                                         │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│ Columns (14 total):                                                       │
+│   1.  Timestamp (YYYY-MM-DD HH:MM:SS.mmm)                                 │
+│   2.  Status                                                              │
+│   3.  Cycles                                                              │
+│   4.  Position_1_mm                                                       │
+│   5.  Force_Lower_N                                                       │
+│   6.  Travel_1_mm                                                         │
+│   7.  Position_2_mm                                                       │
+│   8.  Force_Upper_N                                                       │
+│   9.  Travel_2_mm                                                         │
+│   10. Travel_at_Upper_mm                                                  │
+│   11. Loss_of_Stiffness_Percent ← NEW in V2                               │
+│   12. Error_Code                                                          │
+│   13. Error_Description                                                   │
+│   14. Raw_Data                                                            │
+│                                                                           │
+│ File Naming:                                                              │
+│   fatigue_test_YYYYMMDD_HHMMSS.csv                                        │
+│   If exists: fatigue_test_YYYYMMDD_HHMMSS_01.csv                          │
+│                                                                           │
+│ Location: ./logs/                                                         │
+└───────────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│ KEY ERROR CODES                                                           │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│ 000  No Error                                                             │
+│ 010  Test failed                                                          │
+│ 011  Additional Path 1 Violation                                          │
+│ 012  Additional Path 2 Violation                                          │
+│ 013  Force Limit 2 below limit                                            │
+│ 014  Force Limit 2 above limit                                            │
+│ 101  Motor could not initialize                                           │
+│ 102  Motor communication error                                            │
+│ 103  No reference position set                                            │
+│ 104  Motor not ready                                                      │
+│ 106  Motor initialization error                                           │
+│ 107  Motor blocked                                                        │
+│ 201  Actuation travel too small                                           │
+│ 202  Force 1 already at target (start)                                    │
+│ 203  Force 2 already at target (start)                                    │
+│ 204  Force 1 could not build up                                           │
+│ 205  Force 2 could not build up                                           │
+│                                                                           │
+│ See full specification for complete list                                  │
+└───────────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│ V2 UPDATES (Feb 5, 2026)                                                  │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│ ✓ Field names updated for clarity                                         │
+│   (Position_0 → Position_1, Travel_Lower → Travel_1, etc.)                │
+│                                                                           │
+│ ✓ Plot 2 redesigned: Now shows Travel measurements                        │
+│   (Previously showed Positions)                                           │
+│                                                                           │
+│ ✓ Plot 3 added: Loss of Stiffness % monitoring                            │
+│   (Completely new in V2)                                                  │
+│                                                                           │
+│ ✓ Negative values accepted for force and position                         │
+│   (V1 rejected negative values)                                           │
+│                                                                           │
+│ ✓ Unlimited data points                                                   │
+│   (V1 limited to 1000 points)                                             │
+│                                                                           │
+│ ✓ Help menu added with comprehensive documentation                        │
+│                                                                           │
+│ ✓ Version menu added with update history                                  │
+└───────────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│ ACCEPTANCE CRITERIA AT-A-GLANCE                                           │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│ Data Acquisition:                                                         │
+│   □ Connects to serial port successfully                                  │
+│   □ Receives data at 0.1-1.0s intervals                                   │
+│   □ No data loss at 10 Hz                                                 │
+│                                                                           │
+│ Data Logging:                                                             │
+│   □ CSV files created automatically                                       │
+│   □ Timestamp-based naming                                                │
+│   □ Never overwrites existing files                                       │
+│   □ All valid data logged                                                 │
+│                                                                           │
+│ Plotting:                                                                 │
+│   □ Plot 1: Forces (Lower + Upper)                                        │
+│   □ Plot 2: Travel (3 traces)                                             │
+│   □ Plot 3: Loss of Stiffness                                             │
+│   □ All data visible (no cutoff)                                          │
+│   □ Negative values plotted correctly                                     │
+│   □ Auto-ranging works                                                    │
+│                                                                           │
+│ User Interface:                                                           │
+│   □ All controls functional                                               │
+│   □ Help menu accessible                                                  │
+│   □ Version info displayed                                                │
+│   □ Statistics update in real-time                                        │
+│                                                                           │
+│ Data Processing:                                                          │
+│   □ Parsing 100% accurate for valid data                                  │
+│   □ Invalid data rejected gracefully                                      │
+│   □ Loss of Stiffness calculated correctly                                │
+│   □ Error codes interpreted properly                                      │
+│                                                                           │
+│ Performance:                                                              │
+│   □ Handles 10 Hz data rate                                               │
+│   □ CPU < 25%                                                             │
+│   □ Memory < 500 MB for 24h test                                          │
+│   □ No crashes during operation                                           │
+└───────────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│ NAVIGATION TO FULL DOCUMENT                                               │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│ Section 1: Introduction & Scope                                           │
+│ Section 2: Overall System Description                                     │
+│ Section 3: Detailed Functional Requirements                               │
+│ Section 4: Non-Functional Requirements                                    │
+│ Section 5: Data Format Specifications                                     │
+│ Section 6: Interface Requirements                                         │
+│ Section 7: Appendices (Traceability, Change Log)                          │
+│                                                                           │
+│ Use this quick reference for rapid lookup                                 │
+│ Refer to full document for complete acceptance criteria                   │
+└───────────────────────────────────────────────────────────────────────────┘
+
+Priority Levels:
+────────────────
+[MUST]   Critical - System cannot function without it
+[SHOULD] Important - Significant value
+[COULD]  Desirable - Nice to have
+
+All V2 requirements are [MUST] or [SHOULD] priority.
+
+═══════════════════════════════════════════════════════════════════════════
+For complete requirements specification, see:
+SOFTWARE_REQUIREMENTS_SPECIFICATION_V2.txt
+═══════════════════════════════════════════════════════════════════════════

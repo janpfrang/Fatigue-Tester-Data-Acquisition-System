@@ -1,0 +1,333 @@
+═══════════════════════════════════════════════════════════════════════════
+V1 vs V2 COMPARISON - VISUAL GUIDE
+Fatigue Tester Data Acquisition System
+═══════════════════════════════════════════════════════════════════════════
+
+FIELD NAMING COMPARISON
+═══════════════════════
+
+Serial Data Format (UNCHANGED):
+────────────────────────────────
+DTA;31422;182;263;0;793;2238;0;611;0;!
+└─┘ └───┘ └─┘ └─┘ └┘ └─┘ └──┘ └┘ └─┘ └┘
+ │    │    │   │   │   │    │   │   │   └─ End marker
+ │    │    │   │   │   │    │   │   └───── Error code
+ │    │    │   │   │   │    │   └───────── Travel at Upper
+ │    │    │   │   │   │    └───────────── Upper Force
+ │    │    │   │   │   └────────────────── Position (upper)
+ │    │    │   │   └────────────────────── Additional travel
+ │    │    │   └────────────────────────── Lower Force
+ │    │    └────────────────────────────── Position
+ │    └─────────────────────────────────── Cycles
+ └──────────────────────────────────────── Status
+
+V1 Field Names:                 V2 Field Names:
+──────────────────             ──────────────────
+Position_0_mm                   Position_1_mm
+Force_Lower_N          (same)   Force_Lower_N
+Travel_Lower_mm                 Travel_1_mm
+Position_Upper_mm               Position_2_mm
+Force_Upper_N          (same)   Force_Upper_N
+Travel_Upper_mm                 Travel_2_mm
+Travel_at_Upper_mm     (same)   Travel_at_Upper_mm
+
+PLOT LAYOUT COMPARISON
+══════════════════════
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                           VERSION 1                                  │
+├─────────────────────────────────────────────────────────────────────┤
+│ Plot 1: Forces vs Cycles                                            │
+│   • Lower Force [N]                     (blue line)                 │
+│   • Upper Force [N]                     (red line)                  │
+├─────────────────────────────────────────────────────────────────────┤
+│ Plot 2: Positions vs Cycles                                         │
+│   • Position 0 [mm]                     (green line)                │
+│   • Position Upper [mm]                 (magenta line)              │
+├─────────────────────────────────────────────────────────────────────┤
+│ Plot 3: Travel at Upper Force vs Cycles                             │
+│   • Travel at Upper Force [mm]          (cyan line)                 │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                           VERSION 2                                  │
+├─────────────────────────────────────────────────────────────────────┤
+│ Plot 1: Forces vs Cycles                            ← UNCHANGED     │
+│   • Lower Force [N]                     (blue line)                 │
+│   • Upper Force [N]                     (red line)                  │
+├─────────────────────────────────────────────────────────────────────┤
+│ Plot 2: Travel Measurements vs Cycles               ← CHANGED       │
+│   • Travel at Upper Force [mm]          (green line)                │
+│   • Additional Travel 1 [mm]            (cyan line)                 │
+│   • Additional Travel 2 [mm]            (magenta line)              │
+├─────────────────────────────────────────────────────────────────────┤
+│ Plot 3: Loss of Stiffness vs Cycles                 ← NEW           │
+│   • Loss of Stiffness [%]               (orange line)               │
+│     Formula: (Travel_2 / Travel_at_Upper) × 100                     │
+└─────────────────────────────────────────────────────────────────────┘
+
+CSV OUTPUT COMPARISON
+═════════════════════
+
+V1 CSV Headers:                 V2 CSV Headers:
+──────────────────             ──────────────────
+Timestamp              (same)   Timestamp
+Status                 (same)   Status
+Cycles                 (same)   Cycles
+Position_0_mm                   Position_1_mm
+Force_Lower_N          (same)   Force_Lower_N
+Travel_Lower_mm                 Travel_1_mm
+Position_Upper_mm               Position_2_mm
+Force_Upper_N          (same)   Force_Upper_N
+Travel_Upper_mm                 Travel_2_mm
+Travel_at_Upper_mm     (same)   Travel_at_Upper_mm
+                                Loss_of_Stiffness_Percent ← NEW!
+Error_Code             (same)   Error_Code
+Error_Description      (same)   Error_Description
+Raw_Data               (same)   Raw_Data
+
+Example CSV Output:
+
+V1:
+───
+Timestamp,Status,Cycles,Position_0_mm,Force_Lower_N,Travel_Lower_mm,...
+2026-02-05 14:30:00,DTA,1000,1.82,26.3,0.00,7.93,223.8,0.00,6.11,0,...
+
+V2:
+───
+Timestamp,Status,Cycles,Position_1_mm,Force_Lower_N,Travel_1_mm,Position_2_mm,Force_Upper_N,Travel_2_mm,Travel_at_Upper_mm,Loss_of_Stiffness_Percent,...
+2026-02-05 14:30:00,DTA,1000,1.82,26.3,0.00,7.93,223.8,0.00,6.11,0.00,0,...
+
+DATA VALIDATION COMPARISON
+═══════════════════════════
+
+V1 Validation:                  V2 Validation:
+──────────────                 ──────────────
+✗ Reject negative forces        ✓ Allow negative forces
+✗ Reject if upper < lower       ✓ Allow any force relationship
+✓ Validate status (DTA/END)     ✓ Validate status (DTA/END)
+✓ Validate cycle count          ✓ Validate cycle count
+
+Example Scenarios:
+
+Scenario 1: Negative Force
+──────────────────────────
+Data: Force_Lower = -5.0 N
+
+V1 Behavior: ✗ Validation FAILED - "Negative force values"
+V2 Behavior: ✓ Validation PASSED - Data accepted and plotted
+
+Scenario 2: Upper < Lower Force
+────────────────────────────────
+Data: Force_Lower = 100 N, Force_Upper = 50 N
+
+V1 Behavior: ✗ Validation FAILED - "Upper force less than lower force"
+V2 Behavior: ✓ Validation PASSED - Data accepted and plotted
+
+PLOT POINT LIMITS COMPARISON
+═════════════════════════════
+
+V1 Configuration:               V2 Configuration:
+─────────────────              ─────────────────
+max_points_display = 1000       max_points_display = 0 (unlimited)
+
+Buffer Behavior:
+
+V1: Uses deque(maxlen=1000)
+    ┌─────────────────────────────────┐
+    │ Point 1 ... Point 1000          │ ← When point 1001 arrives,
+    └─────────────────────────────────┘    point 1 is dropped
+
+V2: Uses deque() - no maxlen
+    ┌─────────────────────────────────────────────────────────┐
+    │ Point 1 ... Point 1000 ... Point 10000 ... Point N     │
+    └─────────────────────────────────────────────────────────┘
+    ↑ All points retained in memory
+
+Test Duration Examples:
+
+At 1 Hz data rate:
+─────────────────
+V1: Shows last 1000 seconds (~16 minutes) of data
+V2: Shows ALL data from test start
+
+At 10 Hz data rate:
+──────────────────
+V1: Shows last 100 seconds (~1.7 minutes) of data
+V2: Shows ALL data from test start
+
+Memory Usage Estimate:
+
+Data Rate │ Test Duration │ V1 Memory │ V2 Memory
+──────────┼───────────────┼───────────┼──────────
+1 Hz      │ 1 hour        │ ~100 KB   │ ~360 KB
+1 Hz      │ 10 hours      │ ~100 KB   │ ~3.6 MB
+10 Hz     │ 1 hour        │ ~100 KB   │ ~3.6 MB
+10 Hz     │ 10 hours      │ ~100 KB   │ ~36 MB
+
+LOSS OF STIFFNESS CALCULATION
+══════════════════════════════
+
+NEW in V2: Automatic calculation and plotting
+
+Formula:
+────────
+Loss_of_Stiffness [%] = (Travel_2 / Travel_at_Upper) × 100
+
+Where:
+- Travel_2 = Additional travel to reach Upper Force
+- Travel_at_Upper = Total travel at Upper Force
+
+Example Calculation:
+
+Given Data:
+───────────
+Travel_2 = 0.05 mm
+Travel_at_Upper = 6.11 mm
+
+Calculation:
+────────────
+Loss_of_Stiffness = (0.05 / 6.11) × 100 = 0.818%
+
+Interpretation:
+───────────────
+- 0% = No loss (perfectly stiff)
+- >0% = Some loss of stiffness
+- Increasing trend = Progressive stiffness loss (degradation)
+
+Special Case:
+─────────────
+If Travel_at_Upper = 0, returns 0.0% (prevents division by zero)
+
+Plot Appearance:
+
+    Loss of Stiffness [%]
+    ▲
+    │     ╱
+  2 │    ╱
+    │   ╱
+  1 │  ╱
+    │ ╱
+  0 └────────────────▶ Cycles
+    0      10000
+
+Rising trend indicates material degradation.
+
+USER INTERFACE COMPARISON
+══════════════════════════
+
+V1 Menu Bar:                    V2 Menu Bar:
+────────────                   ────────────
+[No menu bar]                   Help | Version
+                                  ├─ Help Documentation
+                                  ├─ About
+                                  └─ Version Information
+
+Help Menu Features (NEW in V2):
+────────────────────────────────
+✓ Quick start guide
+✓ Plot descriptions (all 3 plots explained)
+✓ Data logging instructions
+✓ Plot controls documentation
+✓ Troubleshooting tips
+✓ Data format reference
+✓ HTML formatted for readability
+
+Version Menu Features (NEW in V2):
+───────────────────────────────────
+✓ Application version number
+✓ Release date
+✓ Requirements version (V2)
+✓ Component version list
+✓ V2 updates checklist
+✓ Python requirements
+✓ Technology stack information
+
+GUI LAYOUT:
+───────────
+[Same layout, no visual changes to controls and plots arrangement]
+
+MIGRATION GUIDE
+═══════════════
+
+For Existing V1 Users:
+──────────────────────
+
+Step 1: Backup Existing Data
+─────────────────────────────
+- Copy all files from logs/ directory to backup location
+- Old CSV files use V1 field names
+- Keep for historical comparison
+
+Step 2: Update Application
+───────────────────────────
+- Replace all .py files with V2 versions
+- No configuration changes needed
+- Serial port settings unchanged
+
+Step 3: Understand New Plots
+─────────────────────────────
+- Plot 1 unchanged (still Forces)
+- Plot 2 now shows Travel measurements (not Positions)
+- Plot 3 shows Loss of Stiffness (new calculation)
+
+Step 4: Review New CSV Format
+──────────────────────────────
+- Note renamed fields in CSV headers
+- New Loss_of_Stiffness_Percent column
+- All calculations automatic
+
+Step 5: Test with Mock Data
+────────────────────────────
+- Use "Mock Data" mode to verify operation
+- Observe all 3 plots updating
+- Check CSV output format
+- Verify negative values accepted
+
+What Stays the Same:
+────────────────────
+✓ Serial data format (identical)
+✓ Serial port configuration
+✓ Baudrate settings
+✓ Connection procedure
+✓ Data logging frequency
+✓ File naming convention
+✓ User controls layout
+✓ Statistics display
+✓ Watchdog timer
+
+What Changes:
+─────────────
+✗ CSV field names (renamed for clarity)
+✗ Plot 2 content (Travel instead of Position)
+✗ Plot 3 content (Loss of Stiffness, new)
+✗ Added Loss_of_Stiffness_Percent column
+✗ Validation allows negative values
+✗ No limit on plotted points
+✗ Help and Version menus added
+
+QUICK REFERENCE
+═══════════════
+
+Key V2 Features at a Glance:
+─────────────────────────────
+
+1. Clearer field names (position 1/2, travel 1/2)
+2. Plot 2: All travel measurements in one view
+3. Plot 3: Real-time stiffness monitoring
+4. Negative values fully supported
+5. Complete test history visible (unlimited points)
+6. Built-in help system
+7. Version tracking
+
+Primary Benefits:
+─────────────────
+✓ Better monitoring of material degradation
+✓ Complete test data always visible
+✓ More flexible data acceptance
+✓ Enhanced user support (Help menu)
+✓ Improved field naming clarity
+
+═══════════════════════════════════════════════════════════════════════════
+END OF V1 vs V2 COMPARISON
+═══════════════════════════════════════════════════════════════════════════

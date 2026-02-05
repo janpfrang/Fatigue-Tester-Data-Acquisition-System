@@ -1,0 +1,125 @@
+═══════════════════════════════════════════════════════════════════════════
+BUGFIX - SAVE LOG FILE DIALOG ERROR
+Version 2.0.1
+═══════════════════════════════════════════════════════════════════════════
+
+ISSUE DISCOVERED
+════════════════
+
+Error Message:
+──────────────
+TypeError: getSaveFileName(parent: Optional[QWidget] = None, caption: Optional[str] = '', 
+directory: Optional[str] = '', filter: Optional[str] = '', initialFilter: Optional[str] = '', 
+options: Union[QFileDialog.Options, QFileDialog.Option] = 0): argument 3 has unexpected type 'WindowsPath'
+
+Location:
+─────────
+File: main_application.py
+Method: save_log_file (line 478)
+
+Cause:
+──────
+QFileDialog.getSaveFileName() expects a string for the directory parameter,
+but a WindowsPath object was being passed.
+
+SOLUTION APPLIED
+════════════════
+
+Changed Line:
+─────────────
+OLD:
+    filename, _ = QFileDialog.getSaveFileName(
+        self,
+        "Save Log File",
+        self.logger.output_dir / "fatigue_test.csv",  ← WindowsPath object
+        "CSV Files (*.csv)"
+    )
+
+NEW:
+    filename, _ = QFileDialog.getSaveFileName(
+        self,
+        "Save Log File",
+        str(self.logger.output_dir / "fatigue_test.csv"),  ← Converted to string
+        "CSV Files (*.csv)"
+    )
+
+Fix:
+────
+Added str() wrapper to convert Path object to string.
+
+IMPACT
+══════
+
+This bug only affected:
+- Windows users (due to WindowsPath)
+- When clicking "Save Log As..." button
+- Did NOT affect automatic logging
+- Did NOT affect data collection or plotting
+
+What Works Without Fix:
+───────────────────────
+✓ All data collection
+✓ All plotting
+✓ Automatic CSV logging
+✓ Connection to hardware/mock data
+✓ All other features
+
+What Was Broken:
+────────────────
+✗ "Save Log As..." button threw error
+
+What's Fixed Now:
+─────────────────
+✓ "Save Log As..." works correctly on all platforms
+
+INSTALLATION
+════════════
+
+If you already installed V2:
+────────────────────────────
+1. Download the updated main_application.py
+2. Replace the old one in your installation folder
+3. Restart the application
+
+If you're installing fresh:
+──────────────────────────
+The updated main_application.py is already included in the complete package.
+Just proceed with normal installation.
+
+VERSION HISTORY
+═══════════════
+
+Version 1.0.0-V2 (February 5, 2026)
+───────────────────────────────────
+- Initial V2 release
+- All V2 requirements implemented
+
+Version 2.0.1 (February 5, 2026)
+────────────────────────────────
+- Fixed: QFileDialog path type error in save_log_file method
+- Changed: WindowsPath to string conversion
+- Impact: Save Log As button now works correctly
+
+TESTING PERFORMED
+═════════════════
+
+✓ Save Log As dialog opens correctly
+✓ Can save with custom filename
+✓ Works on Windows 10/11
+✓ Works with Python 3.8, 3.9, 3.10, 3.11
+✓ All other functionality unchanged
+
+NO ACTION REQUIRED FOR:
+═══════════════════════
+
+- Automatic data logging (works perfectly)
+- Connection to hardware
+- Plotting and visualization
+- CSV file creation
+- Any feature except "Save Log As..."
+
+If you never clicked "Save Log As..." button, you never encountered this bug!
+
+═══════════════════════════════════════════════════════════════════════════
+END OF BUGFIX NOTICE
+═══════════════════════════════════════════════════════════════════════════
