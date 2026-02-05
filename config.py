@@ -10,7 +10,7 @@ from typing import Dict
 class SerialConfig:
     """Serial communication configuration"""
     port: str = "COM3"
-    baudrate: int = 9600
+    baudrate: int = 115200
     timeout: float = 1.0
     bytesize: int = 8
     parity: str = 'N'  # None

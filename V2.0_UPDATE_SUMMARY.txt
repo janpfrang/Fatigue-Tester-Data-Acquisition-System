@@ -1,0 +1,180 @@
+================================================================================
+  VERSION 2.0 UPDATE SUMMARY
+  Fatigue Tester Data Acquisition System
+  Date: February 5, 2026
+================================================================================
+
+CHANGES MADE
+════════════
+
+This document summarizes the MINIMAL changes made to update the application
+to version 2.0, as requested. No GUI layout or appearance changes were made.
+
+1. BAUDRATE CHANGED TO 115200
+──────────────────────────────
+   File: config.py (line 13)
+   Change: baudrate: int = 9600  →  baudrate: int = 115200
+   
+   Reason: Better performance with modern fatigue testing equipment
+
+2. ADDED "SERIAL DATA LOGGER AND PLOTTER - USER MANUAL" TO HELP MENU
+─────────────────────────────────────────────────────────────────────
+   File: main_application.py
+   
+   a) Updated setup_menu_bar() method (line ~156)
+      - Added new menu item: 'Serial Data Logger and Plotter - User Manual'
+      - Placed BEFORE existing 'Help Documentation' menu item
+      - Connects to new show_user_manual() method
+   
+   b) Added new show_user_manual() method (after show_help, ~line 637)
+      - Displays comprehensive user manual in message box
+      - HTML-formatted content with sections:
+        * Quick Start
+        * Main Features  
+        * Data Format
+        * CSV Output
+        * New in Version 2.0
+        * Error Codes
+        * Troubleshooting
+        * Tips
+
+3. VERSION UPDATED TO 2.0
+─────────────────────────
+   File: main_application.py
+   
+   a) Window title (line 113)
+      Changed: "Fatigue Tester Data Acquisition System"
+      To: "Fatigue Tester Data Acquisition System v2.0"
+   
+   b) About dialog (line 641)
+      Changed: Version: 1.0.0 (Updated for V2 Requirements)
+      To: Version: 2.0 (Updated for V2 Requirements)
+   
+   c) Version Information dialog (line 686)
+      Changed: Version: 1.0.0
+      To: Version: 2.0
+   
+   d) Component version descriptions updated:
+      - Configuration Module: Added "baudrate 115200"
+      - Main Application: Added "User Manual"
+   
+   e) Updates list in Version dialog:
+      Added two new items:
+      - "✓ Default baudrate changed to 115200"
+      - "✓ Added 'Serial Data Logger and Plotter - User Manual' menu item"
+
+4. SOFTWARE REQUIREMENTS SPECIFICATION UPDATED
+───────────────────────────────────────────────
+   File: SOFTWARE_REQUIREMENTS_SPECIFICATION_V2.md
+   
+   a) REQ-001.2 Acceptance Criteria (line ~291)
+      - Added 115200 to baudrate list
+      - Added: "Default baudrate is 115200 (v2.0)"
+   
+   b) Section 6.2 Hardware Interfaces (line ~1166)
+      - Updated: "default 115200 (v2.0)"
+   
+   c) Section 7.2 Change Log (line ~1281)
+      - Added section 5: "Configuration Updates"
+      - Added baudrate change
+      - Added User Manual menu item
+      - Updated rationale
+
+
+FILES MODIFIED
+══════════════
+
+1. config.py
+   - Line 13: baudrate changed from 9600 to 115200
+
+2. main_application.py  
+   - Line 113: Window title updated to include "v2.0"
+   - Lines 151-172: setup_menu_bar() - added User Manual menu item
+   - Lines 637-709: Added show_user_manual() method
+   - Line 641: About dialog version → 2.0
+   - Line 686: Version dialog → 2.0
+   - Line 693: Configuration description updated
+   - Line 698: Main Application description updated  
+   - Lines 709-710: Added two new update items
+
+3. SOFTWARE_REQUIREMENTS_SPECIFICATION_V2.md
+   - Line ~291: Added default baudrate 115200 to acceptance criteria
+   - Line ~1166: Added default baudrate 115200 to connection parameters
+   - Lines ~1281-1295: Updated Change Log with new items
+
+
+WHAT WAS NOT CHANGED
+════════════════════
+
+✓ GUI Layout - remains exactly the same
+✓ Plot arrangement - still three plots as before
+✓ Field names - no changes (Position_1, Position_2, etc. already in V2)
+✓ Loss of Stiffness calculation - already implemented
+✓ Negative value support - already implemented
+✓ Unlimited data points - already implemented
+✓ All other existing features remain unchanged
+
+
+TESTING VERIFICATION
+════════════════════
+
+To verify the changes:
+
+1. Check Baudrate:
+   - Open config.py
+   - Verify line 13: baudrate: int = 115200
+
+2. Check Help Menu:
+   - Run: python main_application.py
+   - Menu → Help
+   - Verify menu items (in order):
+     1. "Serial Data Logger and Plotter - User Manual" (NEW)
+     2. "Help Documentation" (existing)
+     3. "About" (existing)
+
+3. Check User Manual:
+   - Menu → Help → "Serial Data Logger and Plotter - User Manual"
+   - Verify dialog opens with comprehensive manual
+   - Check sections are present and readable
+
+4. Check Version Display:
+   - Check window title shows "v2.0"
+   - Menu → Help → About
+   - Verify shows "Version: 2.0"
+   - Menu → Version → "Version Information"
+   - Verify shows "Version: 2.0"
+   - Verify update list includes baudrate and user manual items
+
+5. Check SRS Document:
+   - Open SOFTWARE_REQUIREMENTS_SPECIFICATION_V2.md
+   - Search for "115200" - should find default mentioned
+   - Check Section 7.2 Change Log includes new items
+
+
+BACKWARD COMPATIBILITY
+═══════════════════════
+
+✓ All existing features work exactly the same
+✓ CSV file format unchanged
+✓ Data parsing unchanged  
+✓ Plot display unchanged
+✓ GUI layout unchanged
+✓ Only baudrate default changed (still configurable by user)
+
+
+SUMMARY
+═══════
+
+Three minimal, focused changes:
+1. ✓ Baudrate: 9600 → 115200 (config.py)
+2. ✓ Added User Manual menu item with comprehensive help (main_application.py)
+3. ✓ Version displayed as 2.0 throughout application (main_application.py)
+4. ✓ SRS documentation updated accordingly (SOFTWARE_REQUIREMENTS_SPECIFICATION_V2.md)
+
+No appearance changes. No layout changes. No feature removals or modifications.
+Simple, clean update to version 2.0.
+
+
+================================================================================
+END OF UPDATE SUMMARY
+================================================================================

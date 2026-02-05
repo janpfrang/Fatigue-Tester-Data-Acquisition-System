@@ -110,7 +110,7 @@ class MainWindow(QMainWindow):
     
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Fatigue Tester Data Acquisition System")
+        self.setWindowTitle("Fatigue Tester Data Acquisition System v2.0")
         self.setGeometry(100, 100, 1400, 900)
         
         # Initialize configurations
@@ -154,6 +154,10 @@ class MainWindow(QMainWindow):
         
         # Help menu
         help_menu = menubar.addMenu('Help')
+        
+        # User Manual action (NEW for v2.0)
+        user_manual_action = help_menu.addAction('Serial Data Logger and Plotter - User Manual')
+        user_manual_action.triggered.connect(self.show_user_manual)
         
         # Help action
         help_action = help_menu.addAction('Help Documentation')
@@ -589,7 +593,7 @@ class MainWindow(QMainWindow):
 <ul>
 <li><b>Plot 1 - Forces:</b> Lower Force and Upper Force vs. Cycles</li>
 <li><b>Plot 2 - Travel Measurements:</b> Travel at Upper Force, Additional Travel 1, and Additional Travel 2 vs. Cycles</li>
-<li><b>Plot 3 - Loss of Stiffness:</b> Calculated as (Additional Travel 2 / Travel at Upper Force) × 100%</li>
+<li><b>Plot 3 - Loss of Stiffness:</b> Calculated as (Additional Travel 2 / Travel at Upper Force) Ã— 100%</li>
 </ul>
 
 <h3>Data Logging</h3>
@@ -630,11 +634,106 @@ See README.md and QUICKSTART.txt files in the application directory.
         msg.setStandardButtons(QMessageBox.Ok)
         msg.exec_()
     
+    def show_user_manual(self):
+        """Show Serial Data Logger and Plotter User Manual"""
+        manual_text = """
+<h2>Serial Data Logger and Plotter - User Manual</h2>
+<p><b>Version 2.0</b> - February 2026</p>
+
+<h3>Quick Start</h3>
+<ol>
+<li>Connect your fatigue test equipment to a COM port</li>
+<li>Select the COM port from the dropdown</li>
+<li>Verify baudrate is set to <b>115200</b> (default for v2.0)</li>
+<li>Click <b>Connect</b> to start data acquisition</li>
+<li>Monitor the three real-time plots</li>
+<li>Data is automatically logged to CSV files in the logs/ directory</li>
+</ol>
+
+<h3>Main Features</h3>
+<ul>
+<li><b>Real-time Data Acquisition:</b> Receives serial data at 0.1-1.0 second intervals</li>
+<li><b>Three Live Plots:</b>
+  <ul>
+    <li>Plot 1: Lower and Upper Forces [N]</li>
+    <li>Plot 2: Travel measurements [mm]</li>
+    <li>Plot 3: Loss of Stiffness [%]</li>
+  </ul>
+</li>
+<li><b>Automatic CSV Logging:</b> Timestamp-based filenames, never overwrites existing files</li>
+<li><b>Mock Data Mode:</b> Test the application without hardware</li>
+<li><b>Watchdog Timer:</b> Alerts if no data received for 5 seconds</li>
+<li><b>Unlimited Data Points:</b> No artificial limits on test duration</li>
+</ul>
+
+<h3>Data Format</h3>
+<p><b>Serial Input:</b><br>
+<code>DTA;31422;182;263;0;793;2238;0;611;0;!</code></p>
+<p>Fields are semicolon-separated with decimal encoding:
+<ul>
+<li>Position values: last 2 digits are decimals (182 = 1.82 mm)</li>
+<li>Force values: last digit is decimal (263 = 26.3 N)</li>
+</ul>
+</p>
+
+<h3>CSV Output Columns</h3>
+<ul>
+<li>Timestamp, Status, Cycles</li>
+<li>Position_1_mm, Force_Lower_N, Travel_1_mm</li>
+<li>Position_2_mm, Force_Upper_N, Travel_2_mm</li>
+<li>Travel_at_Upper_mm, Error_Code</li>
+<li>Loss_of_Stiffness_Percent (calculated)</li>
+</ul>
+
+<h3>New in Version 2.0</h3>
+<ul>
+<li>Default baudrate: <b>115200</b> (was 9600)</li>
+<li>Added this User Manual menu item</li>
+<li>Support for negative force and position values</li>
+<li>Unlimited data points (no cutoff)</li>
+<li>Loss of Stiffness calculation and Plot 3</li>
+</ul>
+
+<h3>Error Codes</h3>
+<ul>
+<li><b>000:</b> No error</li>
+<li><b>010-014:</b> Test failures (path/force violations)</li>
+<li><b>101-107:</b> Motor errors</li>
+<li><b>201-205:</b> Force search errors</li>
+</ul>
+
+<h3>Troubleshooting</h3>
+<ul>
+<li><b>Connection Failed:</b> Check COM port, baudrate (115200), and USB cable</li>
+<li><b>No Data:</b> Verify equipment is transmitting, check Status Log</li>
+<li><b>Parse Errors:</b> Check data format and baudrate settings</li>
+<li><b>Watchdog Timeout:</b> Check connection, equipment power</li>
+</ul>
+
+<h3>Tips</h3>
+<ul>
+<li>Use "Use Mock Data" mode to test without hardware</li>
+<li>CSV files are in ./logs/ directory</li>
+<li>Files never overwrite (automatic _01, _02 suffix)</li>
+<li>All data points are plotted (no limits)</li>
+<li>Status Log shows real-time messages and errors</li>
+</ul>
+
+<p><i>For more information, see README.md and QUICKSTART.txt</i></p>
+"""
+        
+        msg = QMessageBox(self)
+        msg.setWindowTitle("User Manual - Serial Data Logger and Plotter v2.0")
+        msg.setTextFormat(Qt.RichText)
+        msg.setText(manual_text)
+        msg.setStandardButtons(QMessageBox.Ok)
+        msg.exec_()
+    
     def show_about(self):
         """Show about dialog"""
         about_text = """
 <h2>Fatigue Tester Data Acquisition System</h2>
-<p><b>Version:</b> 1.0.0 (Updated for V2 Requirements)</p>
+<p><b>Version:</b> 2.0 (Updated for V2 Requirements)</p>
 <p><b>Date:</b> February 2026</p>
 
 <p>A professional data acquisition system for fatigue testing equipment with 
@@ -679,40 +778,42 @@ with thread-safe communication.</p>
 
 <table border="1" cellpadding="5" style="border-collapse: collapse;">
 <tr><td><b>Application:</b></td><td>Fatigue Tester Data Acquisition System</td></tr>
-<tr><td><b>Version:</b></td><td>1.0.0</td></tr>
+<tr><td><b>Version:</b></td><td>2.0</td></tr>
 <tr><td><b>Release Date:</b></td><td>February 2026</td></tr>
 <tr><td><b>Requirements:</b></td><td>V2 (Updated 05 Feb 2026)</td></tr>
 </table>
 
 <h3>Component Versions:</h3>
 <ul>
-<li><b>Configuration Module:</b> V2 (Updated field names)</li>
+<li><b>Configuration Module:</b> V2 (Updated field names, baudrate 115200)</li>
 <li><b>Data Parser:</b> V2 (Allows negative values, Loss of Stiffness calc)</li>
 <li><b>Live Plotter:</b> V2 (Three plots, unlimited points)</li>
 <li><b>Data Logger:</b> V2 (Updated CSV headers)</li>
 <li><b>Serial Reader:</b> 1.0</li>
-<li><b>Main Application:</b> V2 (Added Help and Version menus)</li>
+<li><b>Main Application:</b> V2 (Added Help and Version menus, User Manual)</li>
 </ul>
 
 <h3>Updates in V2:</h3>
 <ul>
-<li>✓ Updated field naming (position 1, position 2, travel 1, travel 2)</li>
-<li>✓ New Plot 2: Travel at Upper + Travel 1 + Travel 2</li>
-<li>✓ New Plot 3: Loss of Stiffness % calculation</li>
-<li>✓ Allow negative values for force and position</li>
-<li>✓ Plot unlimited data points (no cutoff)</li>
-<li>✓ Added Help menu</li>
-<li>✓ Added Version menu</li>
+<li>âœ“ Updated field naming (position 1, position 2, travel 1, travel 2)</li>
+<li>âœ“ New Plot 2: Travel at Upper + Travel 1 + Travel 2</li>
+<li>âœ“ New Plot 3: Loss of Stiffness % calculation</li>
+<li>âœ“ Allow negative values for force and position</li>
+<li>âœ“ Plot unlimited data points (no cutoff)</li>
+<li>âœ“ Added Help menu</li>
+<li>âœ“ Added Version menu</li>
+<li>✓ Default baudrate changed to 115200</li>
+<li>✓ Added "Serial Data Logger and Plotter - User Manual" menu item</li>
 </ul>
 
 <h3>Python Requirements:</h3>
 <ul>
 <li>Python: 3.8 or higher</li>
-<li>pyserial: ≥3.5</li>
-<li>PyQt5: ≥5.15.0</li>
-<li>pyqtgraph: ≥0.13.0</li>
-<li>pandas: ≥1.5.0</li>
-<li>numpy: ≥1.23.0</li>
+<li>pyserial: â‰¥3.5</li>
+<li>PyQt5: â‰¥5.15.0</li>
+<li>pyqtgraph: â‰¥0.13.0</li>
+<li>pandas: â‰¥1.5.0</li>
+<li>numpy: â‰¥1.23.0</li>
 </ul>
 """
         
