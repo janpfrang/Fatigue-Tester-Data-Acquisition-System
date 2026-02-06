@@ -1,6 +1,6 @@
 """
 Live Plotter module - Consumer for real-time visualization
-Handles plotting of test data with PyQtGraph
+Handles plotting of test data with PyQtGraph - changed on 6 feb in the comment to test workflow
 """
 
 import pyqtgraph as pg
