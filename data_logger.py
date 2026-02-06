@@ -1,6 +1,6 @@
 """
 Data Logger module - Consumer for CSV file operations
-Handles logging of test data to CSV files
+Handles logging of test data to CSV files - 
 """
 
 import os
