@@ -636,98 +636,52 @@ See README.md and QUICKSTART.txt files in the application directory.
     
     def show_user_manual(self):
         """Show Serial Data Logger and Plotter User Manual"""
-        manual_text = """
-<h2>Serial Data Logger and Plotter - User Manual</h2>
-<p><b>Version 2.0</b> - February 2026</p>
-
-<h3>Quick Start</h3>
-<ol>
-<li>Connect your fatigue test equipment to a COM port</li>
-<li>Select the COM port from the dropdown</li>
-<li>Verify baudrate is set to <b>115200</b> (default for v2.0)</li>
-<li>Click <b>Connect</b> to start data acquisition</li>
-<li>Monitor the three real-time plots</li>
-<li>Data is automatically logged to CSV files in the logs/ directory</li>
-</ol>
-
-<h3>Main Features</h3>
-<ul>
-<li><b>Real-time Data Acquisition:</b> Receives serial data at 0.1-1.0 second intervals</li>
-<li><b>Three Live Plots:</b>
-  <ul>
-    <li>Plot 1: Lower and Upper Forces [N]</li>
-    <li>Plot 2: Travel measurements [mm]</li>
-    <li>Plot 3: Loss of Stiffness [%]</li>
-  </ul>
-</li>
-<li><b>Automatic CSV Logging:</b> Timestamp-based filenames, never overwrites existing files</li>
-<li><b>Mock Data Mode:</b> Test the application without hardware</li>
-<li><b>Watchdog Timer:</b> Alerts if no data received for 5 seconds</li>
-<li><b>Unlimited Data Points:</b> No artificial limits on test duration</li>
-</ul>
-
-<h3>Data Format</h3>
-<p><b>Serial Input:</b><br>
-<code>DTA;31422;182;263;0;793;2238;0;611;0;!</code></p>
-<p>Fields are semicolon-separated with decimal encoding:
-<ul>
-<li>Position values: last 2 digits are decimals (182 = 1.82 mm)</li>
-<li>Force values: last digit is decimal (263 = 26.3 N)</li>
-</ul>
-</p>
-
-<h3>CSV Output Columns</h3>
-<ul>
-<li>Timestamp, Status, Cycles</li>
-<li>Position_1_mm, Force_Lower_N, Travel_1_mm</li>
-<li>Position_2_mm, Force_Upper_N, Travel_2_mm</li>
-<li>Travel_at_Upper_mm, Error_Code</li>
-<li>Loss_of_Stiffness_Percent (calculated)</li>
-</ul>
-
-<h3>New in Version 2.0</h3>
-<ul>
-<li>Default baudrate: <b>115200</b> (was 9600)</li>
-<li>Added this User Manual menu item</li>
-<li>Support for negative force and position values</li>
-<li>Unlimited data points (no cutoff)</li>
-<li>Loss of Stiffness calculation and Plot 3</li>
-</ul>
-
-<h3>Error Codes</h3>
-<ul>
-<li><b>000:</b> No error</li>
-<li><b>010-014:</b> Test failures (path/force violations)</li>
-<li><b>101-107:</b> Motor errors</li>
-<li><b>201-205:</b> Force search errors</li>
-</ul>
-
-<h3>Troubleshooting</h3>
-<ul>
-<li><b>Connection Failed:</b> Check COM port, baudrate (115200), and USB cable</li>
-<li><b>No Data:</b> Verify equipment is transmitting, check Status Log</li>
-<li><b>Parse Errors:</b> Check data format and baudrate settings</li>
-<li><b>Watchdog Timeout:</b> Check connection, equipment power</li>
-</ul>
-
-<h3>Tips</h3>
-<ul>
-<li>Use "Use Mock Data" mode to test without hardware</li>
-<li>CSV files are in ./logs/ directory</li>
-<li>Files never overwrite (automatic _01, _02 suffix)</li>
-<li>All data points are plotted (no limits)</li>
-<li>Status Log shows real-time messages and errors</li>
-</ul>
-
-<p><i>For more information, see README.md and QUICKSTART.txt</i></p>
-"""
+        # Load user manual from external HTML file
+        import os
+        manual_path = os.path.join(os.path.dirname(__file__), 'USER_MANUAL.html')
         
-        msg = QMessageBox(self)
-        msg.setWindowTitle("User Manual - Serial Data Logger and Plotter v2.0")
-        msg.setTextFormat(Qt.RichText)
-        msg.setText(manual_text)
-        msg.setStandardButtons(QMessageBox.Ok)
-        msg.exec_()
+        try:
+            with open(manual_path, 'r', encoding='utf-8') as f:
+                manual_html = f.read()
+            
+            # Create a dialog with a text browser for better HTML rendering
+            from PyQt5.QtWidgets import QDialog, QVBoxLayout, QTextBrowser, QPushButton
+            
+            dialog = QDialog(self)
+            dialog.setWindowTitle("User Manual - Serial Data Logger and Plotter v2.0")
+            dialog.setGeometry(100, 100, 900, 700)
+            
+            layout = QVBoxLayout()
+            
+            # Text browser for HTML content
+            browser = QTextBrowser()
+            browser.setHtml(manual_html)
+            browser.setOpenExternalLinks(True)
+            layout.addWidget(browser)
+            
+            # Close button
+            close_btn = QPushButton("Close")
+            close_btn.clicked.connect(dialog.accept)
+            layout.addWidget(close_btn)
+            
+            dialog.setLayout(layout)
+            dialog.exec_()
+            
+        except FileNotFoundError:
+            # Fallback if file not found
+            QMessageBox.warning(
+                self,
+                "User Manual Not Found",
+                f"Could not find USER_MANUAL.html in application directory.\n\n"
+                f"Expected location: {manual_path}\n\n"
+                f"Please ensure the file is present in the same directory as the application."
+            )
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Error Loading User Manual",
+                f"An error occurred while loading the user manual:\n\n{str(e)}"
+            )
     
     def show_about(self):
         """Show about dialog"""
@@ -735,6 +689,7 @@ See README.md and QUICKSTART.txt files in the application directory.
 <h2>Fatigue Tester Data Acquisition System</h2>
 <p><b>Version:</b> 2.0 (Updated for V2 Requirements)</p>
 <p><b>Date:</b> February 2026</p>
+<p><b>Contact:</b> Uwe Hasenstab and Alexander Waal</p>
 
 <p>A professional data acquisition system for fatigue testing equipment with 
 real-time visualization and comprehensive data logging capabilities.</p>
@@ -795,13 +750,13 @@ with thread-safe communication.</p>
 
 <h3>Updates in V2:</h3>
 <ul>
-<li>âœ“ Updated field naming (position 1, position 2, travel 1, travel 2)</li>
-<li>âœ“ New Plot 2: Travel at Upper + Travel 1 + Travel 2</li>
-<li>âœ“ New Plot 3: Loss of Stiffness % calculation</li>
-<li>âœ“ Allow negative values for force and position</li>
-<li>âœ“ Plot unlimited data points (no cutoff)</li>
-<li>âœ“ Added Help menu</li>
-<li>âœ“ Added Version menu</li>
+<li>✓ Updated field naming (position 1, position 2, travel 1, travel 2)</li>
+<li>✓ New Plot 2: Travel at Upper + Travel 1 + Travel 2</li>
+<li>✓ New Plot 3: Loss of Stiffness % calculation</li>
+<li>✓ Allow negative values for force and position</li>
+<li>✓ Plot unlimited data points (no cutoff)</li>
+<li>✓ Added Help menu</li>
+<li>✓ Added Version menu</li>
 <li>✓ Default baudrate changed to 115200</li>
 <li>✓ Added "Serial Data Logger and Plotter - User Manual" menu item</li>
 </ul>
@@ -809,11 +764,11 @@ with thread-safe communication.</p>
 <h3>Python Requirements:</h3>
 <ul>
 <li>Python: 3.8 or higher</li>
-<li>pyserial: â‰¥3.5</li>
-<li>PyQt5: â‰¥5.15.0</li>
-<li>pyqtgraph: â‰¥0.13.0</li>
-<li>pandas: â‰¥1.5.0</li>
-<li>numpy: â‰¥1.23.0</li>
+<li>pyserial: >=3.5</li>
+<li>PyQt5: >=5.15.0</li>
+<li>pyqtgraph: >=0.13.0</li>
+<li>pandas: >=1.5.0</li>
+<li>numpy: >=1.23.0</li>
 </ul>
 """
         

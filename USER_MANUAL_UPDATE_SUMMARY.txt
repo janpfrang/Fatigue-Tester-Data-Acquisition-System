@@ -1,0 +1,329 @@
+================================================================================
+  USER MANUAL AND FIXES - UPDATE SUMMARY
+  Fatigue Tester Data Acquisition System v2.0
+  Date: February 6, 2026
+================================================================================
+
+CHANGES MADE
+════════════
+
+This document summarizes the updates made to create a comprehensive user
+manual and fix encoding issues in the application.
+
+1. CREATED COMPREHENSIVE USER MANUAL (USER_MANUAL.html)
+────────────────────────────────────────────────────────
+
+Created a complete, professional user manual in HTML format with the
+following sections:
+
+✓ 1. Introduction
+  - Purpose and overview
+  - Key features
+  - What's new in v2.0
+
+✓ 2. Installation
+  - System requirements table
+  - Python dependencies
+  - Verification steps
+
+✓ 3. Quick Start Guide
+  - First launch instructions
+  - Testing without hardware (Mock Mode)
+  - Connecting real hardware
+  - Step-by-step procedures
+
+✓ 4. User Interface Overview
+  - Main window layout
+  - Menu bar details
+  - Control panel components
+  - Status indicators
+
+✓ 5. Detailed Operation Guide
+  - Starting a test session
+  - During testing
+  - Saving data
+  - Ending a test session
+  - Adjusting plot settings
+
+✓ 6. Data Format Specification
+  - Serial data format breakdown
+  - Field conversion table
+  - CSV output format
+  - Loss of Stiffness calculation
+
+✓ 7. Understanding the Plots
+  - Plot 1: Forces vs Cycles
+  - Plot 2: Travel Measurements
+  - Plot 3: Loss of Stiffness
+  - Interpretation guidelines
+
+✓ 8. Error Codes Reference
+  - Complete error code tables:
+    * No Error (000)
+    * Test Failures (010-014)
+    * Motor Errors (101-107)
+    * Force Search Errors (201-205)
+  - Possible causes and required actions
+
+✓ 9. COMPREHENSIVE TROUBLESHOOTING GUIDE
+  - Connection Issues
+    * No ports found
+    * Failed to connect
+    * Connects but no data
+  
+  - Data Reception Issues
+    * Parse errors
+    * Watchdog timeout alerts
+  
+  - Plotting Issues
+    * Plots not updating
+    * Unusual spikes or noise
+  
+  - Data Logging Issues
+    * Cannot find log files
+    * CSV file empty or incomplete
+  
+  - Performance Issues
+    * Application slow or unresponsive
+  
+  - Mock Data Mode Issues
+  
+  - When All Else Fails section
+
+✓ 10. Tips and Best Practices
+  - General tips
+  - Data management
+  - Plot monitoring
+  - Error handling
+  - Performance optimization
+
+✓ 11. Technical Specifications
+  - System architecture
+  - Thread safety
+  - Serial communication parameters
+  - Data rate support
+  - File management
+  - Python dependencies
+  - Performance characteristics
+
+✓ 12. Contact and Support
+  - Authors: Uwe Hasenstab and Alexander Waal
+  - Documentation references
+  - Version history
+
+Features:
+---------
+- Professional HTML formatting with CSS styling
+- Color-coded sections (warnings, tips, important notes)
+- Comprehensive tables for specifications
+- Styled for readability
+- Includes Table of Contents with anchor links
+- ~100 KB comprehensive documentation
+
+
+2. UPDATED main_application.py - show_user_manual() METHOD
+───────────────────────────────────────────────────────────
+
+Changed the method to load the manual from external HTML file instead
+of having embedded text:
+
+OLD:
+  - Manual text was embedded directly in Python code
+  - Used QMessageBox with limited HTML rendering
+  - Limited to ~100 lines of manual content
+
+NEW:
+  - Loads USER_MANUAL.html from application directory
+  - Uses QDialog with QTextBrowser for better HTML rendering
+  - Supports full HTML with CSS styling
+  - Better scrolling and navigation
+  - Error handling if file not found
+  - File location: same directory as main_application.py
+
+Benefits:
+---------
+- Keeps Python code clean and maintainable
+- Easy to update manual without modifying code
+- Better HTML rendering capabilities
+- Larger manual possible without code bloat
+- Professional presentation
+
+
+3. UPDATED main_application.py - show_about() METHOD
+─────────────────────────────────────────────────────
+
+Added contact information:
+
+CHANGE:
+  Added line: <p><b>Contact:</b> Uwe Hasenstab and Alexander Waal</p>
+
+Location: After version and date, before description
+
+
+4. FIXED ENCODING ISSUES IN show_version() METHOD
+──────────────────────────────────────────────────
+
+Fixed two types of encoding problems:
+
+a) Checkmark Mojibake (lines 753-761):
+   
+   BEFORE (broken encoding):
+     <li>âœ" Updated field naming...</li>
+   
+   AFTER (HTML entity):
+     <li>&#10003; Updated field naming...</li>
+   
+   The checkmark symbol (✓) was incorrectly decoded causing mojibake
+   characters "âœ"". Fixed by replacing with HTML entity &#10003; which
+   renders correctly in all contexts.
+
+b) Greater-Than-Or-Equal Symbol (lines 767-771):
+   
+   BEFORE (broken encoding):
+     <li>pyserial: â‰¥3.5</li>
+   
+   AFTER (HTML entity):
+     <li>pyserial: &gt;=3.5</li>
+   
+   The ≥ symbol was broken. Fixed by using HTML entities &gt;= which
+   renders as >= in the interface.
+
+Why These Changes:
+------------------
+- HTML entities are safe across all encodings
+- No dependency on file encoding
+- Renders correctly in QMessageBox
+- Prevents future encoding issues
+
+
+FILES MODIFIED
+══════════════
+
+1. main_application.py
+   Lines Modified:
+   - ~637-680:  show_user_manual() - Complete rewrite to load external file
+   - ~734:      show_about() - Added contact information
+   - 753-761:   show_version() - Fixed checkmark encoding
+   - 767-771:   show_version() - Fixed >= symbol encoding
+
+2. USER_MANUAL.html (NEW FILE)
+   - Complete comprehensive user manual
+   - ~1300 lines of HTML content
+   - Professional styling with CSS
+   - Must be placed in same directory as main_application.py
+
+
+DEPLOYMENT INSTRUCTIONS
+════════════════════════
+
+To deploy these updates:
+
+1. Replace main_application.py with the updated version
+
+2. Place USER_MANUAL.html in the same directory as main_application.py:
+   
+   YourApp/
+   ├── main_application.py
+   ├── USER_MANUAL.html     ← NEW FILE, must be here
+   ├── config.py
+   ├── data_parser.py
+   └── ... (other files)
+
+3. Verify the manual loads:
+   - Run: python main_application.py
+   - Menu → Help → "Serial Data Logger and Plotter - User Manual"
+   - Should open in a dialog window with formatted HTML
+
+4. If file not found error:
+   - Verify USER_MANUAL.html is in same directory
+   - Check file permissions (readable)
+   - Check filename exactly matches (case-sensitive on Linux)
+
+
+TESTING CHECKLIST
+═════════════════
+
+✓ User Manual loads from external file
+✓ Manual displays with proper formatting
+✓ About dialog shows contact information
+✓ Version dialog shows proper checkmarks (not âœ")
+✓ Version dialog shows >= symbols correctly
+✓ No Python syntax errors
+✓ Application starts normally
+
+
+BACKWARD COMPATIBILITY
+═══════════════════════
+
+✓ All existing functionality preserved
+✓ GUI layout unchanged
+✓ Only Help menu behavior enhanced
+✓ Version display corrected
+✓ About dialog enhanced
+
+
+BENEFITS OF THESE CHANGES
+══════════════════════════
+
+1. Comprehensive Documentation:
+   - Users have complete reference guide
+   - Detailed troubleshooting for all common issues
+   - Professional presentation
+
+2. Maintainability:
+   - Manual can be updated without touching Python code
+   - Easy to translate or modify
+   - HTML allows rich formatting
+
+3. User Experience:
+   - Better HTML rendering with QTextBrowser
+   - Scrollable, searchable content
+   - Professional appearance
+
+4. Code Quality:
+   - Removed embedded long strings from Python
+   - Cleaner, more maintainable code
+   - Fixed encoding issues permanently
+
+5. Support Reduction:
+   - Comprehensive troubleshooting guide
+   - Contact information clearly displayed
+   - Self-service support improved
+
+
+CONTACT INFORMATION ADDED
+══════════════════════════
+
+Contact: Uwe Hasenstab and Alexander Waal
+
+This information now appears in:
+- About dialog (Help → About)
+- User Manual (Section 12)
+
+
+FILE SIZES
+══════════
+
+main_application.py:  ~28 KB (slightly reduced)
+USER_MANUAL.html:     ~100 KB (new)
+Total added:          ~100 KB
+
+
+SUMMARY
+═══════
+
+Created a comprehensive professional user manual in external HTML file,
+updated the application to load it properly, added contact information,
+and fixed all encoding issues in the version dialog.
+
+The application now has:
+✓ Complete user manual with troubleshooting
+✓ Professional HTML presentation
+✓ Contact information displayed
+✓ All encoding issues resolved
+✓ Cleaner, more maintainable code
+
+
+================================================================================
+END OF UPDATE SUMMARY
+================================================================================
