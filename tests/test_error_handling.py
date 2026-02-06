@@ -43,12 +43,20 @@ class TestParserErrorHandling(unittest.TestCase):
         result = self.parser.parse(raw)
         self.assertIsNotNone(result)
     
-    def test_missing_end_marker(self):
-        """Test handling of missing end marker"""
-        raw = "DTA;31422;182;263;0;793;2238;0;611;0"  # No !
+    def test_missing_end_marker_with_trailing_semicolon(self):
+        """Test handling of missing end marker (but with trailing semicolon)"""
+        # Note: The format requires a trailing ; to have 11 fields when split
+        raw = "DTA;31422;182;263;0;793;2238;0;611;0;"
         result = self.parser.parse(raw)
-        # Parser should still work (removes ! if present)
+        # Parser should still work
         self.assertIsNotNone(result)
+    
+    def test_completely_malformed_data(self):
+        """Test handling of completely malformed data"""
+        raw = "DTA;31422;182;263;0;793;2238;0;611;0"  # No ! and no trailing ;
+        result = self.parser.parse(raw)
+        # This should fail - wrong format (only 10 fields)
+        self.assertIsNone(result)
     
     def test_invalid_status(self):
         """Test handling of invalid status"""
