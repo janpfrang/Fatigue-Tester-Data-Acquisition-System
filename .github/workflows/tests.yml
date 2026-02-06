@@ -55,9 +55,6 @@ jobs:
         flags: unittests
         fail_ci_if_error: false
         verbose: true
-```
-
----
 
 ## **STEP 5: Your Directory Structure Should Now Look Like**
 ```
