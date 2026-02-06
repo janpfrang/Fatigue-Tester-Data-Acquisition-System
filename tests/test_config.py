@@ -20,9 +20,9 @@ class TestSerialConfig(unittest.TestCase):
         self.assertEqual(config.port, "COM3")
     
     def test_default_baudrate(self):
-        """Test default baudrate"""
+        """Test default baudrate (V2: 115200)"""
         config = SerialConfig()
-        self.assertEqual(config.baudrate, 9600)
+        self.assertEqual(config.baudrate, 115200)  # ← UPDATED
     
     def test_default_timeout(self):
         """Test default timeout"""
@@ -98,11 +98,18 @@ class TestErrorCodes(unittest.TestCase):
         self.assertIn("Additional Path 1", ERROR_CODES[11])
     
     def test_motor_error_codes(self):
-        """Test motor error codes range"""
-        motor_errors = [101, 102, 103, 104, 106, 107]
+        """Test motor error codes (101, 102, 104, 106, 107)"""
+        # These are the actual motor error codes
+        motor_errors = [101, 102, 104, 106, 107]
         for code in motor_errors:
             self.assertIn(code, ERROR_CODES)
             self.assertIn("Motor", ERROR_CODES[code])
+    
+    def test_reference_position_error(self):
+        """Test reference position error code 103"""
+        self.assertIn(103, ERROR_CODES)
+        # This is NOT a motor error, it's about reference position
+        self.assertIn("Reference Position", ERROR_CODES[103])
     
     def test_all_codes_have_descriptions(self):
         """Test that all error codes have descriptions"""
