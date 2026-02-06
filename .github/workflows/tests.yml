@@ -55,24 +55,3 @@ jobs:
         flags: unittests
         fail_ci_if_error: false
         verbose: true
-
-## **STEP 5: Your Directory Structure Should Now Look Like**
-```
-fatigue-tester/
-├── .github/
-│   └── workflows/
-│       └── tests.yml              ← GITHUB ACTIONS FILE
-├── tests/
-│   ├── __init__.py
-│   ├── conftest.py
-│   ├── test_data_parser.py
-│   └── test_data_logger.py
-├── config.py
-├── data_parser.py
-├── data_logger.py
-├── live_plotter.py
-├── serial_reader.py
-├── main_application.py
-├── requirements.txt
-├── README.md
-└── ... (other files)
