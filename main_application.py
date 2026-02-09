@@ -33,6 +33,7 @@ class DataProcessorWorker(QThread):
     data_processed = pyqtSignal(object)  # Emits FatigueTestData
     status_update = pyqtSignal(str)
     error_occurred = pyqtSignal(str)
+    header_detected = pyqtSignal(list)  # NEW: Emits header lines
     
     def __init__(self, data_queue: queue.Queue, parser: DataParser):
         super().__init__()
@@ -43,41 +44,41 @@ class DataProcessorWorker(QThread):
         # Statistics for line filtering
         self.lines_skipped = 0
         self.lines_parsed = 0
+        
+        # Header capture
+        self.header_lines = []
+        self.header_captured = False
+        self.first_data_received = False
     
-    def should_parse_line(self, line: str) -> bool:
+    def should_parse_line(self, line: str) -> tuple:
         """
-        Determine if a line should be parsed
+        Determine if a line should be parsed and if it's a header
         Filters out header and configuration lines
         
         Args:
             line: Raw line from serial/file
             
         Returns:
-            True if line should be parsed, False to skip
+            (should_parse, is_header) tuple
+            - should_parse: True if line should be parsed as data
+            - is_header: True if line is header/config (should be logged but not parsed)
         """
         line = line.strip()
         
-        # Skip empty lines
+        # Skip empty lines (don't log these)
         if not line:
-            return False
+            return (False, False)
         
-        # Skip header lines from fatigue tester
-        if line.startswith('###'):
-            return False
-        if line.startswith('For display'):
-            return False
-        if line.startswith('Loading'):
-            return False
+        # Check if it's a data line (DTA) or end marker (END)
+        if line.startswith('DTA;') or line.startswith('END;'):
+            return (True, False)  # Parse as data
         
-        # Skip configuration line
-        if line.startswith('CNF;'):
-            return False
-        
-        # Parse data lines (DTA) and end markers (END)
-        return line.startswith('DTA;') or line.startswith('END;')
+        # Everything else before first DTA is a header line
+        # These include: ###, For display, Loading, CNF, and any other setup info
+        return (False, True)  # Don't parse, but it's a header (should be logged)
         
     def run(self):
-        """Process data from queue with intelligent line filtering"""
+        """Process data from queue with intelligent line filtering and header capture"""
         self.running = True
         self.status_update.emit("Data processor started")
         
@@ -86,10 +87,29 @@ class DataProcessorWorker(QThread):
                 # Get data from queue with timeout
                 raw_data = self.data_queue.get(timeout=0.1)
                 
-                # Filter out header and config lines
-                if not self.should_parse_line(raw_data):
+                # Check line type
+                should_parse, is_header = self.should_parse_line(raw_data)
+                
+                # Handle header lines (before first data line)
+                if is_header and not self.first_data_received:
+                    self.header_lines.append(raw_data.strip())
                     self.lines_skipped += 1
-                    continue  # Skip this line
+                    continue
+                
+                # If it's neither data nor header, skip
+                if not should_parse and not is_header:
+                    self.lines_skipped += 1
+                    continue
+                
+                # If this is the first data line and we have headers, emit them
+                if should_parse and not self.header_captured and self.header_lines:
+                    self.header_detected.emit(self.header_lines)
+                    self.header_captured = True
+                    self.status_update.emit(f"Captured {len(self.header_lines)} header lines")
+                
+                # Mark that we've received first data
+                if should_parse:
+                    self.first_data_received = True
                 
                 # Parse data
                 parsed_data = self.parser.parse(raw_data)
@@ -418,6 +438,7 @@ class MainWindow(QMainWindow):
             self.processor_worker.data_processed.connect(self.on_data_received)
             self.processor_worker.status_update.connect(self.log_status)
             self.processor_worker.error_occurred.connect(self.log_error)
+            self.processor_worker.header_detected.connect(self.on_headers_received)  # NEW
             self.processor_worker.start()
             
             # Create serial reader or mock reader
@@ -523,6 +544,12 @@ class MainWindow(QMainWindow):
         if data.has_error():
             error_desc = self.parser.get_error_description(data.error_code)
             self.log_error(f"Cycle {data.cycles}: {error_desc}")
+    
+    def on_headers_received(self, headers: list):
+        """Handle received header lines from device"""
+        # Log headers to file
+        self.logger.log_headers(headers)
+        self.log_status(f"Logged {len(headers)} header lines to file")
     
     def on_watchdog_timeout(self, elapsed):
         """Handle watchdog timeout"""
@@ -645,7 +672,7 @@ class MainWindow(QMainWindow):
 <ul>
 <li><b>Plot 1 - Forces:</b> Lower Force and Upper Force vs. Cycles</li>
 <li><b>Plot 2 - Travel Measurements:</b> Travel at Upper Force, Additional Travel 1, and Additional Travel 2 vs. Cycles</li>
-<li><b>Plot 3 - Loss of Stiffness:</b> Calculated as (Additional Travel 2 / Travel at Upper Force) Ãƒâ€” 100%</li>
+<li><b>Plot 3 - Loss of Stiffness:</b> Calculated as (Additional Travel 2 / Travel at Upper Force) ÃƒÆ’Ã¢â‚¬â€ 100%</li>
 </ul>
 
 <h3>Data Logging</h3>
@@ -802,15 +829,15 @@ with thread-safe communication.</p>
 
 <h3>Updates in V2:</h3>
 <ul>
-<li>âœ“ Updated field naming (position 1, position 2, travel 1, travel 2)</li>
-<li>âœ“ New Plot 2: Travel at Upper + Travel 1 + Travel 2</li>
-<li>âœ“ New Plot 3: Loss of Stiffness % calculation</li>
-<li>âœ“ Allow negative values for force and position</li>
-<li>âœ“ Plot unlimited data points (no cutoff)</li>
-<li>âœ“ Added Help menu</li>
-<li>âœ“ Added Version menu</li>
-<li>âœ“ Default baudrate changed to 115200</li>
-<li>âœ“ Added "Serial Data Logger and Plotter - User Manual" menu item</li>
+<li>Ã¢Å“â€œ Updated field naming (position 1, position 2, travel 1, travel 2)</li>
+<li>Ã¢Å“â€œ New Plot 2: Travel at Upper + Travel 1 + Travel 2</li>
+<li>Ã¢Å“â€œ New Plot 3: Loss of Stiffness % calculation</li>
+<li>Ã¢Å“â€œ Allow negative values for force and position</li>
+<li>Ã¢Å“â€œ Plot unlimited data points (no cutoff)</li>
+<li>Ã¢Å“â€œ Added Help menu</li>
+<li>Ã¢Å“â€œ Added Version menu</li>
+<li>Ã¢Å“â€œ Default baudrate changed to 115200</li>
+<li>Ã¢Å“â€œ Added "Serial Data Logger and Plotter - User Manual" menu item</li>
 </ul>
 
 <h3>Python Requirements:</h3>
