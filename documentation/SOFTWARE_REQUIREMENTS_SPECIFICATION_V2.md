@@ -9,8 +9,8 @@
 |-------|-------|
 | **Project** | Fatigue Tester Data Acquisition System |
 | **Document Type** | Software Requirements Specification (SRS) |
-| **Document Version** | 2.0 |
-| **Date** | February 5, 2026 |
+| **Document Version** | 2.1 |
+| **Date** | February 9, 2026 |
 | **Status** | Approved |
 | **Author** | [Your Name/Team] |
 | **Approved By** | [Approver Name] |
@@ -24,6 +24,7 @@
 |---------|------|--------|-------------|
 | 1.0 | [Original] | [Author] | Initial requirements |
 | 2.0 | Feb 5, 2026 | [Author] | Updated plotting requirements, added Help/Version menus, unlimited points |
+| 2.1 | Feb 9, 2026 | [Author] | Added header/configuration logging requirement, updated CSV format specification |
 
 ---
 
@@ -94,6 +95,7 @@ This Software Requirements Specification (SRS) document describes the functional
 **The system shall provide:**
 - Real-time serial data acquisition from fatigue testing equipment
 - Automatic CSV logging with timestamp-based file naming
+- Header and configuration data preservation for test traceability
 - Live visualization with three configurable plots
 - Loss of stiffness calculation and monitoring
 - User-friendly GUI with help system
@@ -146,13 +148,13 @@ The Fatigue Tester Data Acquisition System is a standalone desktop application t
 **System Context:**
 
 ```
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”          â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚   Fatigue       â”‚  Serial  â”‚  Data            â”‚
-â”‚   Testing    â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€>â”‚  Acquisition  â”€â”€â”€â”¼â”€â”€> CSV Files
-â”‚   Equipment     â”‚  Data    â”‚  System          â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜          â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                                      â”‚
-                                      â””â”€â”€> Real-time Plots
++------------------+          +-------------------+
+|   Fatigue        |  Serial  |  Data             |
+|   Testing     ---|--------->|  Acquisition   ---|---> CSV Files
+|   Equipment      |  Data    |  System           |
++------------------+          +-------------------+
+                                      |
+                                      +---> Real-time Plots
 ```
 
 ### 2.2 Product Functions
@@ -277,8 +279,8 @@ The system shall receive data at intervals between 0.1 and 1.0 seconds.
 - No data loss occurs at any supported rate
 
 **Test Method:**
-- Connect with mock data at 10 Hz â†’ Verify all data received
-- Connect with mock data at 1 Hz â†’ Verify all data received
+- Connect with mock data at 10 Hz -> Verify all data received
+- Connect with mock data at 1 Hz -> Verify all data received
 - Verify Lines Received counter matches expected count
 
 ##### REQ-001.2: Serial Parameter Configuration [MUST]
@@ -288,15 +290,14 @@ The system shall allow configuration of serial communication parameters within t
 
 **Acceptance Criteria:**
 - User can select COM port from available ports
-- User can select baudrate (common rates: 9600, 19200, 38400, 57600, 115200)
-- Default baudrate is 115200 (v2.0)
+- User can select baudrate (common rates: 9600, 19200, 38400, etc.)
 - Settings are applied before connection
 - Invalid settings are rejected with clear error message
 
 **Test Method:**
-- Select different COM ports â†’ Verify selection saved
-- Select different baudrates â†’ Verify connection works
-- Test with invalid port â†’ Verify error message displayed
+- Select different COM ports -> Verify selection saved
+- Select different baudrates -> Verify connection works
+- Test with invalid port -> Verify error message displayed
 
 ##### REQ-001.3: Connection Management [MUST]
 
@@ -311,8 +312,8 @@ The system shall provide controls to establish and terminate serial connections.
 - Application can be closed safely while connected
 
 **Test Method:**
-- Click Connect â†’ Verify connection established
-- Click Disconnect â†’ Verify connection terminated
+- Click Connect -> Verify connection established
+- Click Disconnect -> Verify connection terminated
 - Verify settings locked while connected
 
 ##### REQ-001.4: Data Reception Buffer [MUST]
@@ -327,7 +328,7 @@ The system shall use buffered data reception to prevent data loss during tempora
 - No data loss under normal operating conditions
 
 **Test Method:**
-- Simulate high data rate â†’ Verify no data loss
+- Simulate high data rate -> Verify no data loss
 - Monitor queue size during operation
 
 ### 3.2 Data Logging
@@ -355,7 +356,7 @@ The system shall create CSV files with timestamp-based naming upon connection.
 - `logs/` directory created automatically if not present
 
 **Test Method:**
-- Connect to mock data â†’ Verify file created
+- Connect to mock data -> Verify file created
 - Verify filename format matches specification
 - Check file location in `logs/` directory
 
@@ -372,7 +373,7 @@ The system shall never overwrite existing data files.
 
 **Test Method:**
 - Create file with timestamp name
-- Connect again with same timestamp â†’ Verify `_01` appended
+- Connect again with same timestamp -> Verify `_01` appended
 - Verify original file unchanged
 
 ##### REQ-002.3: CSV Format Specification [MUST]
@@ -388,8 +389,8 @@ The system shall use standardized CSV format compatible with common analysis too
 - Compatible with Excel, MATLAB, Python pandas
 
 **Test Method:**
-- Open CSV in Excel â†’ Verify readable
-- Import into Python pandas â†’ Verify successful parse
+- Open CSV in Excel -> Verify readable
+- Import into Python pandas -> Verify successful parse
 - Verify all specified columns present
 
 ##### REQ-002.4: Data Completeness [MUST]
@@ -404,8 +405,8 @@ The system shall log all successfully parsed data without gaps or omissions.
 - Timestamp for each data point
 
 **Test Method:**
-- Send 1000 valid data points â†’ Verify 1000 in CSV
-- Send mix of valid/invalid â†’ Verify only valid logged
+- Send 1000 valid data points -> Verify 1000 in CSV
+- Send mix of valid/invalid -> Verify only valid logged
 - Check Parse Errors counter matches discarded data
 
 ##### REQ-002.5: User-Requested Save [SHOULD]
@@ -423,6 +424,39 @@ The system shall allow users to save current log with custom filename.
 - Click "Save Log As..."
 - Enter custom filename
 - Verify both files exist (original and copy)
+
+##### REQ-002.6: Header and Configuration Logging [MUST]
+
+**Description:**  
+The system shall capture and log device header information and configuration data transmitted before the first data line to preserve complete test traceability.
+
+**Acceptance Criteria:**
+- All lines received before first DTA line are captured
+- Header lines include device identification (e.g., "### VoiceCoilTestStand V1.5 ID=...")
+- Configuration lines (CNF) with setup parameters are captured
+- Headers written as comment lines at top of CSV file
+- Headers written only once per file (before first data line)
+- Standard CSV tools ignore comment lines (compatibility preserved)
+- Headers clearly separated from data with markers
+
+**Rationale:**  
+Header and configuration information contains critical metadata including:
+- Device serial number / ID for traceability
+- Display identification
+- Complete test configuration parameters (CNF line)
+- Setup values and limits
+- Test reproducibility information
+
+**Test Method:**
+- Connect and receive data with headers -> Verify headers in CSV
+- Open CSV in Excel -> Verify comment lines ignored by parser
+- Import CSV in pandas with `comment='#'` -> Verify data loads correctly
+- Verify all header types captured (###, For display, Loading, CNF)
+- Count header lines in file -> Verify matches transmitted headers
+
+**Related Requirements:**
+- REQ-002.3 (CSV Format) - Headers maintain CSV compatibility
+- REQ-NFR-004 (Data Integrity) - Complete test information preserved
 
 ### 3.3 Live Data Plotting
 
@@ -484,13 +518,13 @@ Plot 3 shall display Loss of Stiffness percentage versus Cycles.
 - Single trace: Loss of Stiffness [%] (orange)
 - X-axis: Cycles
 - Y-axis: Loss of Stiffness [%]
-- Value calculated as: (Travel 2 / Travel at Upper) Ã— 100
+- Value calculated as: (Travel 2 / Travel at Upper) x 100
 - Handle division by zero (display 0%)
 
 **Test Method:**
 - Connect to mock data
 - Verify calculation correct
-- Test with Travel at Upper = 0 â†’ Verify no crash
+- Test with Travel at Upper = 0 -> Verify no crash
 - Verify percentage values displayed
 
 ##### REQ-003.4: Auto-Ranging [MUST]
@@ -505,10 +539,10 @@ The system shall automatically adjust X and Y axis ranges as data is received an
 - Auto-ranging can be toggled on/off by user
 
 **Test Method:**
-- Start with small data range â†’ Add large values
+- Start with small data range -> Add large values
 - Verify axes expand to show all data
-- Disable auto-range â†’ Verify axes fixed
-- Enable auto-range â†’ Verify axes resume adjustment
+- Disable auto-range -> Verify axes fixed
+- Enable auto-range -> Verify axes resume adjustment
 
 ##### REQ-003.5: Plot Update Rate [MUST]
 
@@ -522,9 +556,9 @@ The system shall update plots at maximum rate of 1 Hz (once per second) or at da
 - No excessive CPU usage from plotting
 
 **Test Method:**
-- Connect with 10 Hz data â†’ Verify plots update at 1 Hz
-- Connect with 0.5 Hz data â†’ Verify plots update at 0.5 Hz
-- Change update interval setting â†’ Verify applied
+- Connect with 10 Hz data -> Verify plots update at 1 Hz
+- Connect with 0.5 Hz data -> Verify plots update at 0.5 Hz
+- Change update interval setting -> Verify applied
 
 ##### REQ-003.6: Negative Value Support [MUST]
 
@@ -538,8 +572,8 @@ The system shall plot negative values for force and position measurements withou
 - Axes scale appropriately for negative ranges
 
 **Test Method:**
-- Send data with negative force â†’ Verify plotted
-- Send data with negative position â†’ Verify plotted
+- Send data with negative force -> Verify plotted
+- Send data with negative position -> Verify plotted
 - Verify no error messages in console
 - Verify axis range includes negative values
 
@@ -572,9 +606,9 @@ The system shall provide user controls for plot customization.
 - Controls clearly labeled
 
 **Test Method:**
-- Adjust update interval â†’ Verify change applied
-- Toggle auto-range â†’ Verify behavior changes
-- Click Clear Plots â†’ Verify plots cleared
+- Adjust update interval -> Verify change applied
+- Toggle auto-range -> Verify behavior changes
+- Click Clear Plots -> Verify plots cleared
 
 ### 3.4 User Interface
 
@@ -637,8 +671,8 @@ The GUI shall provide a Help menu with documentation access.
   - Troubleshooting tips
 
 **Test Method:**
-- Click Help menu â†’ Verify opens
-- Click Help Documentation â†’ Verify dialog displays
+- Click Help menu -> Verify opens
+- Click Help Documentation -> Verify dialog displays
 - Verify content completeness
 
 ##### REQ-004.4: Version Menu [MUST]
@@ -657,8 +691,8 @@ The GUI shall provide a Version menu showing version information.
   - Update history
 
 **Test Method:**
-- Click Version menu â†’ Verify opens
-- Click Version Information â†’ Verify dialog displays
+- Click Version menu -> Verify opens
+- Click Version Information -> Verify dialog displays
 - Verify all information present and accurate
 
 ##### REQ-004.5: Statistics Display [MUST]
@@ -696,8 +730,8 @@ The GUI shall display a log of system events and errors.
 - "Clear Log" button available
 
 **Test Method:**
-- Connect/disconnect â†’ Verify events logged
-- Trigger error â†’ Verify displayed in red
+- Connect/disconnect -> Verify events logged
+- Trigger error -> Verify displayed in red
 - Verify timestamps present
 
 ### 3.5 Data Processing
@@ -720,12 +754,12 @@ The system shall parse serial data according to specified format.
 
 **Acceptance Criteria:**
 - Correctly interprets 11-field semicolon-separated format
-- Applies proper decimal conversion (e.g., 182 â†’ 1.82 mm)
+- Applies proper decimal conversion (e.g., 182 -> 1.82 mm)
 - Extracts all fields correctly
 - Handles end marker (!)
 
 **Test Method:**
-- Send valid data â†’ Verify all fields extracted correctly
+- Send valid data -> Verify all fields extracted correctly
 - Verify decimal conversions accurate
 - Check parsed values match expected
 
@@ -742,9 +776,9 @@ The system shall validate parsed data for basic correctness.
 - Invalid data rejected with explanation
 
 **Test Method:**
-- Send data with wrong field count â†’ Verify rejected
-- Send data with invalid status â†’ Verify rejected
-- Send data with negative force â†’ Verify accepted
+- Send data with wrong field count -> Verify rejected
+- Send data with invalid status -> Verify rejected
+- Send data with negative force -> Verify accepted
 - Check console for error explanations
 
 ##### REQ-005.3: Parse Error Handling [MUST]
@@ -760,7 +794,7 @@ The system shall handle parse errors gracefully without crashing.
 - Error rate displayed to user
 
 **Test Method:**
-- Send invalid data â†’ Verify system continues
+- Send invalid data -> Verify system continues
 - Verify parse error counter increments
 - Verify invalid data not in CSV or plots
 - Check console for error messages
@@ -771,7 +805,7 @@ The system shall handle parse errors gracefully without crashing.
 The system shall calculate Loss of Stiffness for each data point.
 
 **Acceptance Criteria:**
-- Formula: (Additional Travel 2 / Travel at Upper) Ã— 100
+- Formula: (Additional Travel 2 / Travel at Upper) x 100
 - Result in percentage (%)
 - Handle division by zero (return 0%)
 - Calculation included in CSV output
@@ -779,7 +813,7 @@ The system shall calculate Loss of Stiffness for each data point.
 
 **Test Method:**
 - Verify calculation formula correct
-- Test with Travel at Upper = 0 â†’ Verify returns 0%
+- Test with Travel at Upper = 0 -> Verify returns 0%
 - Check CSV contains Loss_of_Stiffness_Percent column
 - Verify Plot 3 shows calculated values
 
@@ -795,9 +829,9 @@ The system shall interpret error codes and provide descriptions.
 - Unknown error codes handled gracefully
 
 **Test Method:**
-- Send data with error code 0 â†’ Verify "No Error"
-- Send data with error code 11 â†’ Verify correct description
-- Send data with unknown code â†’ Verify graceful handling
+- Send data with error code 0 -> Verify "No Error"
+- Send data with error code 11 -> Verify correct description
+- Send data with unknown code -> Verify graceful handling
 
 ---
 
@@ -817,7 +851,7 @@ The system shall handle data rates up to 10 Hz (0.1 second intervals) without da
 - Memory usage < 500 MB for 24-hour test
 
 **Test Method:**
-- Run 1-hour test at 10 Hz â†’ Verify data complete
+- Run 1-hour test at 10 Hz -> Verify data complete
 - Monitor CPU and memory usage
 
 #### REQ-NFR-002: Plot Rendering Performance [MUST]
@@ -864,8 +898,8 @@ The system shall never corrupt or lose logged data.
 - Graceful handling of disk full condition
 
 **Test Method:**
-- Fill disk to near capacity â†’ Verify error handling
-- Force close application â†’ Verify data preserved
+- Fill disk to near capacity -> Verify error handling
+- Force close application -> Verify data preserved
 - Check data integrity after abnormal shutdown
 
 #### REQ-NFR-005: Error Detection [MUST]
@@ -978,7 +1012,7 @@ The system shall provide mock data mode for testing without hardware.
 - Useful for training and testing
 
 **Test Method:**
-- Enable mock mode â†’ Connect
+- Enable mock mode -> Connect
 - Verify data generated and processed
 - Verify all features work in mock mode
 
@@ -1008,13 +1042,13 @@ DTA;31422;182;263;0;793;2238;0;611;0;!
 |---------|------|------|-------------|------------|---------|
 | 1 | Status | String | Test status | - | `DTA` or `END` |
 | 2 | Cycles | Integer | Number of test cycles | - | `31422` |
-| 3 | Position 1 | Integer | Position 1 in mm | Ã· 100 | `182` â†’ 1.82 mm |
-| 4 | Force Lower | Integer | Lower force in N | Ã· 10 | `263` â†’ 26.3 N |
-| 5 | Travel 1 | Integer | Additional travel 1 in mm | Ã· 100 | `0` â†’ 0.00 mm |
-| 6 | Position 2 | Integer | Position 2 in mm | Ã· 100 | `793` â†’ 7.93 mm |
-| 7 | Force Upper | Integer | Upper force in N | Ã· 10 | `2238` â†’ 223.8 N |
-| 8 | Travel 2 | Integer | Additional travel 2 in mm | Ã· 100 | `0` â†’ 0.00 mm |
-| 9 | Travel at Upper | Integer | Total travel at Upper Force in mm | Ã· 100 | `611` â†’ 6.11 mm |
+| 3 | Position 1 | Integer | Position 1 in mm | / 100 | `182` -> 1.82 mm |
+| 4 | Force Lower | Integer | Lower force in N | / 10 | `263` -> 26.3 N |
+| 5 | Travel 1 | Integer | Additional travel 1 in mm | / 100 | `0` -> 0.00 mm |
+| 6 | Position 2 | Integer | Position 2 in mm | / 100 | `793` -> 7.93 mm |
+| 7 | Force Upper | Integer | Upper force in N | / 10 | `2238` -> 223.8 N |
+| 8 | Travel 2 | Integer | Additional travel 2 in mm | / 100 | `0` -> 0.00 mm |
+| 9 | Travel at Upper | Integer | Total travel at Upper Force in mm | / 100 | `611` -> 6.11 mm |
 | 10 | Error Code | Integer | Error/status code (see Section 5.3) | - | `0` |
 | 11 | End Marker | Character | End of transmission | - | `!` |
 
@@ -1036,13 +1070,74 @@ Lines may end with any standard line ending (`\n`, `\r\n`, or `\r`). The parser 
 
 ### 5.2 CSV File Format
 
-#### CSV Structure
+#### File Structure
 
-The CSV file contains a header row followed by data rows.
+CSV log files consist of three sections in this order:
 
-**Header Row:**
+**1. Header Section (Comment Lines)** - NEW in V2.1
+```csv
+# ===== DEVICE HEADER INFORMATION =====
+# ### VoiceCoilTestStand V1.5 ID=2BC4D630 ###
+# For display ceSID-48339C75
+# Loading... Adr: '1' (0x31). Ok!
+# CNF;49;0;0;0;0;220;0;152;8;152;8;44;1;44;1;184;11;...;!
+# ===== DATA BEGINS BELOW =====
+```
+
+**2. CSV Header Row**
 ```
 Timestamp,Status,Cycles,Position_1_mm,Force_Lower_N,Travel_1_mm,Position_2_mm,Force_Upper_N,Travel_2_mm,Travel_at_Upper_mm,Loss_of_Stiffness_Percent,Error_Code,Error_Description,Raw_Data
+```
+
+**3. Data Rows**
+```csv
+2026-02-09 14:30:22.145,DTA,11,0.78,2.9,0.00,11.95,219.9,0.00,11.17,0.00,0,No Error,DTA;11;78;29;0;1195;2199;0;1117;0;!
+2026-02-09 14:30:22.245,DTA,21,0.78,2.9,0.00,11.95,219.9,0.00,11.16,0.00,0,No Error,DTA;21;78;29;0;1195;2199;0;1116;0;!
+...
+```
+
+#### Header Section Format
+
+**Purpose:**  
+Preserve complete test metadata for traceability and reproducibility.
+
+**Format Rules:**
+- All header lines prefixed with `# ` (hash followed by space)
+- Section begins with `# ===== DEVICE HEADER INFORMATION =====`
+- Section ends with `# ===== DATA BEGINS BELOW =====`
+- Device headers captured exactly as transmitted by fatigue tester
+- Headers written once per file when first DTA line is received
+- Empty lines are not logged
+
+**Header Content:**  
+Headers contain device metadata transmitted before the first data line, including:
+- **Device Identification**: e.g., `### VoiceCoilTestStand V1.5 ID=2BC4D630 ###`
+  - Identifies specific tester hardware
+  - Includes model and serial number/ID
+- **Display Information**: e.g., `For display ceSID-48339C75`
+  - Display module identification
+- **Status Messages**: e.g., `Loading... Adr: '1' (0x31). Ok!`
+  - Initialization and setup status
+- **Configuration Data**: CNF line containing all test setup parameters
+  - Test limits, force settings, position parameters
+  - Approximately 196 semicolon-separated values
+  - Essential for test reproducibility
+
+**CSV Compatibility:**
+- Lines starting with `#` are standard CSV comments
+- **Excel**: Automatically ignores comment lines when opening
+- **pandas**: Use `pd.read_csv(filename, comment='#')`  to skip headers
+- **MATLAB**: Use `readtable(filename, 'CommentStyle','#')`
+- **Most CSV parsers**: Skip comment lines by default
+
+**Example Header Section:**
+```csv
+# ===== DEVICE HEADER INFORMATION =====
+# ### VoiceCoilTestStand V1.5 ID=2BC4D630 ###
+# For display ceSID-48339C75
+# Loading... Adr: '1' (0x31). Ok!
+# CNF;49;0;0;0;0;220;0;152;8;152;8;44;1;44;1;184;11;20;0;32;78;10;0;10;1;0;1;0;63;66;15;0;0;0;0;0;16;39;0;0;255;3;0;0;0;0;0;0;0;0;0;0;0;0;0;0;255;3;0;0;16;39;0;0;0;0;0;0;15;39;0;0;83;7;0;0;166;14;0;0;0;0;0;0;0;0;0;0;0;0;0;0;96;234;0;0;48;117;0;0;0;0;0;0;48;117;0;0;1;0;0;0;2;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;32;78;0;0;16;39;0;0;0;0;0;0;16;39;0;0;255;3;0;0;16;39;0;0;0;0;0;0;0;0;0;0;0;0;0;0;16;39;0;0;255;3;0;0;0;0;0;0;255;3;0;0;2;0;0;0;1;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;48;117;0;0;96;234;0;0;0;0;0;0;96;234;0;0;2;0;0;0;1;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;16;39;0;0;32;78;0;0;0;0;0;0;32;78;0;0;!
+# ===== DATA BEGINS BELOW =====
 ```
 
 #### Column Descriptions
@@ -1059,7 +1154,7 @@ Timestamp,Status,Cycles,Position_1_mm,Force_Lower_N,Travel_1_mm,Position_2_mm,Fo
 | Force_Upper_N | 1 decimal place | Float | Upper force in Newtons |
 | Travel_2_mm | 2 decimal places | Float | Additional travel 2 in millimeters |
 | Travel_at_Upper_mm | 2 decimal places | Float | Travel at Upper Force in millimeters |
-| Loss_of_Stiffness_Percent | 2 decimal places | Float | (Travel_2_mm / Travel_at_Upper_mm) Ã— 100 |
+| Loss_of_Stiffness_Percent | 2 decimal places | Float | (Travel_2_mm / Travel_at_Upper_mm) x 100 |
 | Error_Code | - | Integer | Numeric error code |
 | Error_Description | - | String | Human-readable error description |
 | Raw_Data | - | String | Original unprocessed serial data |
@@ -1163,7 +1258,7 @@ The main window is divided into two primary sections:
 **Physical Interface:** RS-232 serial port or USB-to-Serial adapter
 
 **Connection Parameters:**
-- **Baud Rate:** Configurable (common: 9600, 19200, 38400, 57600, 115200), default 115200 (v2.0)
+- **Baud Rate:** Configurable (common: 9600, 19200, 38400, 57600, 115200)
 - **Data Bits:** 8
 - **Parity:** None
 - **Stop Bits:** 1
@@ -1177,11 +1272,11 @@ The main window is divided into two primary sections:
 
 | Library | Version | Purpose | Interface |
 |---------|---------|---------|-----------|
-| pyserial | â‰¥3.5 | Serial port communication | `serial.Serial` class |
-| PyQt5 | â‰¥5.15.0 | GUI framework | Qt widgets and signals/slots |
-| pyqtgraph | â‰¥0.13.0 | Real-time plotting | `PlotWidget`, `PlotItem` classes |
-| pandas | â‰¥1.5.0 | Data manipulation | `DataFrame` class |
-| numpy | â‰¥1.23.0 | Numerical operations | Array operations |
+| pyserial | '%Y3.5 | Serial port communication | `serial.Serial` class |
+| PyQt5 | '%Y5.15.0 | GUI framework | Qt widgets and signals/slots |
+| pyqtgraph | '%Y0.13.0 | Real-time plotting | `PlotWidget`, `PlotItem` classes |
+| pandas | '%Y1.5.0 | Data manipulation | `DataFrame` class |
+| numpy | '%Y1.23.0 | Numerical operations | Array operations |
 
 #### Operating System Interfaces
 
@@ -1206,7 +1301,7 @@ The main window is divided into two primary sections:
 **Timing:** Asynchronous, data-driven
 
 **Data Flow:**  
-Test Equipment â†’ Serial Port â†’ Application
+Test Equipment -> Serial Port -> Application
 
 No bidirectional communication required. Application is receive-only for data acquisition.
 
@@ -1264,10 +1359,10 @@ This matrix maps requirements to implementation modules and test cases.
 **Changes from Version 1.0:**
 
 **1. Field Naming Updates:**
-- `Position_0_mm` â†’ `Position_1_mm`
-- `Travel_Lower_mm` â†’ `Travel_1_mm`
-- `Position_Upper_mm` â†’ `Position_2_mm`
-- `Travel_Upper_mm` â†’ `Travel_2_mm`
+- `Position_0_mm` -> `Position_1_mm`
+- `Travel_Lower_mm` -> `Travel_1_mm`
+- `Position_Upper_mm` -> `Position_2_mm`
+- `Travel_Upper_mm` -> `Travel_2_mm`
 
 **2. Plot Requirements Changed:**
 - **REQ-003.2:** Plot 2 now shows Travel measurements instead of Positions
@@ -1281,13 +1376,8 @@ This matrix maps requirements to implementation modules and test cases.
 **4. User Interface Updates:**
 - **REQ-004.3:** Added Help menu requirement
 - **REQ-004.4:** Added Version menu requirement
-- **New:** Added "Serial Data Logger and Plotter - User Manual" menu item (v2.0 final)
 
-**5. Configuration Updates:**
-- **config.py:** Default baudrate changed from 9600 to 115200 (v2.0 final)
-- **REQ-001.2:** Updated baudrate default to 115200
-
-**6. CSV Format Updates:**
+**5. CSV Format Updates:**
 - **Section 5.2:** Added `Loss_of_Stiffness_Percent` column
 - Updated field names to match new nomenclature
 
@@ -1295,9 +1385,43 @@ This matrix maps requirements to implementation modules and test cases.
 - Improved field naming clarity
 - Enhanced monitoring capabilities with Loss of Stiffness
 - Better support for long-duration tests (unlimited points)
-- Improved user support (Help and Version menus, User Manual)
+- Improved user support (Help and Version menus)
 - More flexible data acceptance (negative values)
-- Higher baudrate (115200) for better performance with modern equipment
+
+#### Version 2.1 (February 9, 2026)
+
+**Changes from Version 2.0:**
+
+**1. Header and Configuration Logging:**
+- **REQ-002.6:** NEW requirement for header/configuration data preservation
+- System now captures all device headers transmitted before first data line
+- Headers include: device ID, display ID, status messages, CNF configuration
+- Headers written as comment lines at top of CSV files
+
+**2. CSV Format Updates:**
+- **Section 5.2:** Expanded to document header section format
+- CSV files now have three sections: headers (comments), CSV header row, data rows
+- Header lines prefixed with `# ` for standard comment compatibility
+- Maintains compatibility with Excel, pandas, MATLAB (comment lines automatically skipped)
+
+**3. Data Traceability Enhancement:**
+- **Section 1.2:** Updated scope to include header preservation
+- Complete test configuration now preserved in every log file
+- Device serial number/ID logged for equipment traceability
+- CNF configuration line (~196 parameters) enables test reproducibility
+
+**Rationale:**
+- **Complete Traceability**: Every log file contains device ID and complete setup parameters
+- **Test Reproducibility**: CNF configuration allows exact test recreation
+- **Standards Compliance**: Uses standard CSV comment format (# prefix)
+- **Tool Compatibility**: Works seamlessly with Excel, pandas, MATLAB, and other CSV tools
+- **Quality Assurance**: Enables verification of which device and configuration produced data
+- **No Breaking Changes**: Existing tools still work (comments are automatically skipped)
+
+**Impact on Existing Requirements:**
+- REQ-002.3 (CSV Format): Updated but maintains backward compatibility
+- REQ-NFR-004 (Data Integrity): Enhanced with complete metadata preservation
+- All other requirements: Unchanged
 
 ---
 
