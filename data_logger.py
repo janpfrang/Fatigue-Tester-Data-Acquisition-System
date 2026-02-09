@@ -1,6 +1,6 @@
 """
 Data Logger module - Consumer for CSV file operations
-Handles logging of test data to CSV files - 
+Handles logging of test data to CSV files
 """
 
 import os
@@ -35,6 +35,43 @@ class DataLogger:
         self.current_filename: Optional[str] = None
         self.data_buffer: List[FatigueTestData] = []
         self.total_points_logged = 0
+        self.headers_logged = False  # NEW: Track if headers have been written
+    
+    def log_headers(self, headers: list):
+        """
+        Log header lines from device to CSV file
+        Headers are written as comment lines at the top of the file
+        
+        Args:
+            headers: List of header lines from device
+        """
+        if not self.current_file:
+            self.start_new_log()
+        
+        if self.headers_logged:
+            # Headers already logged for this file
+            return
+        
+        try:
+            # Read existing content (just the CSV header row)
+            with open(self.current_file, 'r', encoding='utf-8') as f:
+                csv_header = f.readline()
+            
+            # Rewrite file with device headers first, then CSV header
+            with open(self.current_file, 'w', encoding='utf-8') as f:
+                # Write device headers as comments
+                f.write("# ===== DEVICE HEADER INFORMATION =====\n")
+                for header in headers:
+                    f.write(f"# {header}\n")
+                f.write("# ===== DATA BEGINS BELOW =====\n")
+                # Write CSV header
+                f.write(csv_header)
+            
+            self.headers_logged = True
+            print(f"[DataLogger] Logged {len(headers)} header lines to {self.current_filename}")
+            
+        except Exception as e:
+            print(f"[DataLogger] Error logging headers: {e}")
         
     def start_new_log(self) -> str:
         """
@@ -58,6 +95,7 @@ class DataLogger:
         
         self.current_file = filepath
         self.current_filename = filename
+        self.headers_logged = False  # NEW: Reset for new file
         
         # Create file with header
         self._write_header()
