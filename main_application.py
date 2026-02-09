@@ -1,6 +1,8 @@
 """
 Main Application - Fatigue Tester Data Acquisition System
 Orchestrates all components with PyQt5 GUI
+
+Version 2.1 - Added intelligent line filtering for header/config lines
 """
 
 import sys
@@ -38,8 +40,44 @@ class DataProcessorWorker(QThread):
         self.parser = parser
         self.running = False
         
+        # Statistics for line filtering
+        self.lines_skipped = 0
+        self.lines_parsed = 0
+    
+    def should_parse_line(self, line: str) -> bool:
+        """
+        Determine if a line should be parsed
+        Filters out header and configuration lines
+        
+        Args:
+            line: Raw line from serial/file
+            
+        Returns:
+            True if line should be parsed, False to skip
+        """
+        line = line.strip()
+        
+        # Skip empty lines
+        if not line:
+            return False
+        
+        # Skip header lines from fatigue tester
+        if line.startswith('###'):
+            return False
+        if line.startswith('For display'):
+            return False
+        if line.startswith('Loading'):
+            return False
+        
+        # Skip configuration line
+        if line.startswith('CNF;'):
+            return False
+        
+        # Parse data lines (DTA) and end markers (END)
+        return line.startswith('DTA;') or line.startswith('END;')
+        
     def run(self):
-        """Process data from queue"""
+        """Process data from queue with intelligent line filtering"""
         self.running = True
         self.status_update.emit("Data processor started")
         
@@ -47,6 +85,11 @@ class DataProcessorWorker(QThread):
             try:
                 # Get data from queue with timeout
                 raw_data = self.data_queue.get(timeout=0.1)
+                
+                # Filter out header and config lines
+                if not self.should_parse_line(raw_data):
+                    self.lines_skipped += 1
+                    continue  # Skip this line
                 
                 # Parse data
                 parsed_data = self.parser.parse(raw_data)
@@ -56,6 +99,7 @@ class DataProcessorWorker(QThread):
                     is_valid, error_msg = self.parser.validate_data(parsed_data)
                     
                     if is_valid:
+                        self.lines_parsed += 1
                         # Emit parsed data to consumers
                         self.data_processed.emit(parsed_data)
                     else:
@@ -63,7 +107,10 @@ class DataProcessorWorker(QThread):
                         
                     # Check for test end or errors
                     if parsed_data.is_test_end():
-                        self.status_update.emit("Test ended")
+                        self.status_update.emit(
+                            f"Test ended at cycle {parsed_data.cycles} "
+                            f"(Parsed: {self.lines_parsed}, Skipped: {self.lines_skipped})"
+                        )
                     
                     if parsed_data.has_error():
                         error_desc = self.parser.get_error_description(parsed_data.error_code)
@@ -75,8 +122,13 @@ class DataProcessorWorker(QThread):
                 self.error_occurred.emit(f"Processing error: {e}")
     
     def stop(self):
-        """Stop the processor"""
+        """Stop the processor and report statistics"""
         self.running = False
+        if self.lines_parsed > 0 or self.lines_skipped > 0:
+            self.status_update.emit(
+                f"Processor stopped - Parsed: {self.lines_parsed}, "
+                f"Skipped: {self.lines_skipped} header/config lines"
+            )
 
 
 class WatchdogTimer(QTimer):
@@ -593,7 +645,7 @@ class MainWindow(QMainWindow):
 <ul>
 <li><b>Plot 1 - Forces:</b> Lower Force and Upper Force vs. Cycles</li>
 <li><b>Plot 2 - Travel Measurements:</b> Travel at Upper Force, Additional Travel 1, and Additional Travel 2 vs. Cycles</li>
-<li><b>Plot 3 - Loss of Stiffness:</b> Calculated as (Additional Travel 2 / Travel at Upper Force) Ã— 100%</li>
+<li><b>Plot 3 - Loss of Stiffness:</b> Calculated as (Additional Travel 2 / Travel at Upper Force) Ãƒâ€” 100%</li>
 </ul>
 
 <h3>Data Logging</h3>
@@ -750,15 +802,15 @@ with thread-safe communication.</p>
 
 <h3>Updates in V2:</h3>
 <ul>
-<li>✓ Updated field naming (position 1, position 2, travel 1, travel 2)</li>
-<li>✓ New Plot 2: Travel at Upper + Travel 1 + Travel 2</li>
-<li>✓ New Plot 3: Loss of Stiffness % calculation</li>
-<li>✓ Allow negative values for force and position</li>
-<li>✓ Plot unlimited data points (no cutoff)</li>
-<li>✓ Added Help menu</li>
-<li>✓ Added Version menu</li>
-<li>✓ Default baudrate changed to 115200</li>
-<li>✓ Added "Serial Data Logger and Plotter - User Manual" menu item</li>
+<li>âœ“ Updated field naming (position 1, position 2, travel 1, travel 2)</li>
+<li>âœ“ New Plot 2: Travel at Upper + Travel 1 + Travel 2</li>
+<li>âœ“ New Plot 3: Loss of Stiffness % calculation</li>
+<li>âœ“ Allow negative values for force and position</li>
+<li>âœ“ Plot unlimited data points (no cutoff)</li>
+<li>âœ“ Added Help menu</li>
+<li>âœ“ Added Version menu</li>
+<li>âœ“ Default baudrate changed to 115200</li>
+<li>âœ“ Added "Serial Data Logger and Plotter - User Manual" menu item</li>
 </ul>
 
 <h3>Python Requirements:</h3>
