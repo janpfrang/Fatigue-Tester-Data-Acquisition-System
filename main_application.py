@@ -33,7 +33,6 @@ class DataProcessorWorker(QThread):
     data_processed = pyqtSignal(object)  # Emits FatigueTestData
     status_update = pyqtSignal(str)
     error_occurred = pyqtSignal(str)
-    header_detected = pyqtSignal(list)  # NEW: Emits header lines
     
     def __init__(self, data_queue: queue.Queue, parser: DataParser):
         super().__init__()
@@ -44,41 +43,41 @@ class DataProcessorWorker(QThread):
         # Statistics for line filtering
         self.lines_skipped = 0
         self.lines_parsed = 0
-        
-        # Header capture
-        self.header_lines = []
-        self.header_captured = False
-        self.first_data_received = False
     
-    def should_parse_line(self, line: str) -> tuple:
+    def should_parse_line(self, line: str) -> bool:
         """
-        Determine if a line should be parsed and if it's a header
+        Determine if a line should be parsed
         Filters out header and configuration lines
         
         Args:
             line: Raw line from serial/file
             
         Returns:
-            (should_parse, is_header) tuple
-            - should_parse: True if line should be parsed as data
-            - is_header: True if line is header/config (should be logged but not parsed)
+            True if line should be parsed, False to skip
         """
         line = line.strip()
         
-        # Skip empty lines (don't log these)
+        # Skip empty lines
         if not line:
-            return (False, False)
+            return False
         
-        # Check if it's a data line (DTA) or end marker (END)
-        if line.startswith('DTA;') or line.startswith('END;'):
-            return (True, False)  # Parse as data
+        # Skip header lines from fatigue tester
+        if line.startswith('###'):
+            return False
+        if line.startswith('For display'):
+            return False
+        if line.startswith('Loading'):
+            return False
         
-        # Everything else before first DTA is a header line
-        # These include: ###, For display, Loading, CNF, and any other setup info
-        return (False, True)  # Don't parse, but it's a header (should be logged)
+        # Skip configuration line
+        if line.startswith('CNF;'):
+            return False
+        
+        # Parse data lines (DTA) and end markers (END)
+        return line.startswith('DTA;') or line.startswith('END;')
         
     def run(self):
-        """Process data from queue with intelligent line filtering and header capture"""
+        """Process data from queue with intelligent line filtering"""
         self.running = True
         self.status_update.emit("Data processor started")
         
@@ -87,29 +86,10 @@ class DataProcessorWorker(QThread):
                 # Get data from queue with timeout
                 raw_data = self.data_queue.get(timeout=0.1)
                 
-                # Check line type
-                should_parse, is_header = self.should_parse_line(raw_data)
-                
-                # Handle header lines (before first data line)
-                if is_header and not self.first_data_received:
-                    self.header_lines.append(raw_data.strip())
+                # Filter out header and config lines
+                if not self.should_parse_line(raw_data):
                     self.lines_skipped += 1
-                    continue
-                
-                # If it's neither data nor header, skip
-                if not should_parse and not is_header:
-                    self.lines_skipped += 1
-                    continue
-                
-                # If this is the first data line and we have headers, emit them
-                if should_parse and not self.header_captured and self.header_lines:
-                    self.header_detected.emit(self.header_lines)
-                    self.header_captured = True
-                    self.status_update.emit(f"Captured {len(self.header_lines)} header lines")
-                
-                # Mark that we've received first data
-                if should_parse:
-                    self.first_data_received = True
+                    continue  # Skip this line
                 
                 # Parse data
                 parsed_data = self.parser.parse(raw_data)
@@ -383,6 +363,80 @@ class MainWindow(QMainWindow):
         self.clear_plot_btn.clicked.connect(self.clear_plots)
         layout.addWidget(self.clear_plot_btn, 2, 0, 1, 2)
         
+        # Separator line
+        from PyQt5.QtWidgets import QFrame
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        layout.addWidget(line, 3, 0, 1, 2)
+        
+        # --- Upper Force Thresholds ---
+        layout.addWidget(QLabel("Upper Force Thresholds:"), 4, 0, 1, 2)
+        
+        # Enable Upper Force thresholds checkbox
+        self.upper_force_threshold_check = QCheckBox("Enable Thresholds")
+        self.upper_force_threshold_check.stateChanged.connect(self.on_upper_force_threshold_changed)
+        layout.addWidget(self.upper_force_threshold_check, 5, 0, 1, 2)
+        
+        # Upper Force - Upper Limit
+        layout.addWidget(QLabel("  Upper Limit [N]:"), 6, 0)
+        from PyQt5.QtWidgets import QDoubleSpinBox
+        self.upper_force_upper_limit_spin = QDoubleSpinBox()
+        self.upper_force_upper_limit_spin.setRange(-99999.0, 99999.0)
+        self.upper_force_upper_limit_spin.setValue(1000.0)
+        self.upper_force_upper_limit_spin.setDecimals(2)
+        self.upper_force_upper_limit_spin.setSingleStep(10.0)
+        self.upper_force_upper_limit_spin.valueChanged.connect(self.on_upper_force_threshold_changed)
+        self.upper_force_upper_limit_spin.setEnabled(False)
+        layout.addWidget(self.upper_force_upper_limit_spin, 6, 1)
+        
+        # Upper Force - Lower Limit
+        layout.addWidget(QLabel("  Lower Limit [N]:"), 7, 0)
+        self.upper_force_lower_limit_spin = QDoubleSpinBox()
+        self.upper_force_lower_limit_spin.setRange(-99999.0, 99999.0)
+        self.upper_force_lower_limit_spin.setValue(-1000.0)
+        self.upper_force_lower_limit_spin.setDecimals(2)
+        self.upper_force_lower_limit_spin.setSingleStep(10.0)
+        self.upper_force_lower_limit_spin.valueChanged.connect(self.on_upper_force_threshold_changed)
+        self.upper_force_lower_limit_spin.setEnabled(False)
+        layout.addWidget(self.upper_force_lower_limit_spin, 7, 1)
+        
+        # Separator line
+        line2 = QFrame()
+        line2.setFrameShape(QFrame.HLine)
+        line2.setFrameShadow(QFrame.Sunken)
+        layout.addWidget(line2, 8, 0, 1, 2)
+        
+        # --- Loss of Stiffness Thresholds ---
+        layout.addWidget(QLabel("Loss of Stiffness Thresholds:"), 9, 0, 1, 2)
+        
+        # Enable Loss of Stiffness thresholds checkbox
+        self.stiffness_threshold_check = QCheckBox("Enable Thresholds")
+        self.stiffness_threshold_check.stateChanged.connect(self.on_stiffness_threshold_changed)
+        layout.addWidget(self.stiffness_threshold_check, 10, 0, 1, 2)
+        
+        # Loss of Stiffness - Upper Limit
+        layout.addWidget(QLabel("  Upper Limit [%]:"), 11, 0)
+        self.stiffness_upper_limit_spin = QDoubleSpinBox()
+        self.stiffness_upper_limit_spin.setRange(-99999.0, 99999.0)
+        self.stiffness_upper_limit_spin.setValue(100.0)
+        self.stiffness_upper_limit_spin.setDecimals(2)
+        self.stiffness_upper_limit_spin.setSingleStep(1.0)
+        self.stiffness_upper_limit_spin.valueChanged.connect(self.on_stiffness_threshold_changed)
+        self.stiffness_upper_limit_spin.setEnabled(False)
+        layout.addWidget(self.stiffness_upper_limit_spin, 11, 1)
+        
+        # Loss of Stiffness - Lower Limit
+        layout.addWidget(QLabel("  Lower Limit [%]:"), 12, 0)
+        self.stiffness_lower_limit_spin = QDoubleSpinBox()
+        self.stiffness_lower_limit_spin.setRange(-99999.0, 99999.0)
+        self.stiffness_lower_limit_spin.setValue(0.0)
+        self.stiffness_lower_limit_spin.setDecimals(2)
+        self.stiffness_lower_limit_spin.setSingleStep(1.0)
+        self.stiffness_lower_limit_spin.valueChanged.connect(self.on_stiffness_threshold_changed)
+        self.stiffness_lower_limit_spin.setEnabled(False)
+        layout.addWidget(self.stiffness_lower_limit_spin, 12, 1)
+        
         group.setLayout(layout)
         return group
     
@@ -438,7 +492,6 @@ class MainWindow(QMainWindow):
             self.processor_worker.data_processed.connect(self.on_data_received)
             self.processor_worker.status_update.connect(self.log_status)
             self.processor_worker.error_occurred.connect(self.log_error)
-            self.processor_worker.header_detected.connect(self.on_headers_received)  # NEW
             self.processor_worker.start()
             
             # Create serial reader or mock reader
@@ -545,12 +598,6 @@ class MainWindow(QMainWindow):
             error_desc = self.parser.get_error_description(data.error_code)
             self.log_error(f"Cycle {data.cycles}: {error_desc}")
     
-    def on_headers_received(self, headers: list):
-        """Handle received header lines from device"""
-        # Log headers to file
-        self.logger.log_headers(headers)
-        self.log_status(f"Logged {len(headers)} header lines to file")
-    
     def on_watchdog_timeout(self, elapsed):
         """Handle watchdog timeout"""
         self.log_error(f"No data received for {elapsed:.1f} seconds!")
@@ -601,6 +648,46 @@ class MainWindow(QMainWindow):
         """Handle auto-range checkbox change"""
         self.plotter.enable_auto_range(state == Qt.Checked)
     
+    def on_upper_force_threshold_changed(self):
+        """Handle Upper Force threshold changes"""
+        enabled = self.upper_force_threshold_check.isChecked()
+        
+        # Enable/disable spin boxes
+        self.upper_force_upper_limit_spin.setEnabled(enabled)
+        self.upper_force_lower_limit_spin.setEnabled(enabled)
+        
+        # Get values
+        upper_limit = self.upper_force_upper_limit_spin.value()
+        lower_limit = self.upper_force_lower_limit_spin.value()
+        
+        # Update plotter
+        self.plotter.set_upper_force_thresholds(upper_limit, lower_limit, enabled)
+        
+        if enabled:
+            self.log_status(f"Upper Force thresholds enabled: [{lower_limit}, {upper_limit}] N")
+        else:
+            self.log_status("Upper Force thresholds disabled")
+    
+    def on_stiffness_threshold_changed(self):
+        """Handle Loss of Stiffness threshold changes"""
+        enabled = self.stiffness_threshold_check.isChecked()
+        
+        # Enable/disable spin boxes
+        self.stiffness_upper_limit_spin.setEnabled(enabled)
+        self.stiffness_lower_limit_spin.setEnabled(enabled)
+        
+        # Get values
+        upper_limit = self.stiffness_upper_limit_spin.value()
+        lower_limit = self.stiffness_lower_limit_spin.value()
+        
+        # Update plotter
+        self.plotter.set_stiffness_thresholds(upper_limit, lower_limit, enabled)
+        
+        if enabled:
+            self.log_status(f"Stiffness thresholds enabled: [{lower_limit}, {upper_limit}] %")
+        else:
+            self.log_status("Stiffness thresholds disabled")
+    
     def update_statistics(self):
         """Update statistics display"""
         stats = []
@@ -626,6 +713,17 @@ class MainWindow(QMainWindow):
         plotter_stats = self.plotter.get_statistics()
         stats.append(f"Points Plotted: {plotter_stats['points_plotted']}")
         stats.append(f"Buffer Size: {plotter_stats['buffer_size']}")
+        
+        # Threshold violations
+        if plotter_stats['upper_force_thresholds_enabled']:
+            total_points = plotter_stats['points_plotted']
+            violations = plotter_stats['upper_force_violations']
+            stats.append(f"Upper Force Violations: {violations} / {total_points}")
+        
+        if plotter_stats['stiffness_thresholds_enabled']:
+            total_points = plotter_stats['points_plotted']
+            violations = plotter_stats['stiffness_violations']
+            stats.append(f"Stiffness Violations: {violations} / {total_points}")
         
         # Parser statistics
         stats.append(f"Parse Errors: {self.parser.parse_errors}")
