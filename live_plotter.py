@@ -1,6 +1,6 @@
 """
 Live Plotter module - Consumer for real-time visualization
-Handles plotting of test data with PyQtGraph - changed on 6 feb in the comment to test workflow
+Handles plotting of test data with PyQtGraph
 """
 
 import pyqtgraph as pg
@@ -40,10 +40,25 @@ class LivePlotter(QObject):
         self.travel_at_upper = deque()
         self.loss_of_stiffness = deque()
         
+        # Threshold settings for Upper Force
+        self.upper_force_upper_limit = None
+        self.upper_force_lower_limit = None
+        self.upper_force_thresholds_enabled = False
+        
+        # Threshold settings for Loss of Stiffness
+        self.stiffness_upper_limit = None
+        self.stiffness_lower_limit = None
+        self.stiffness_thresholds_enabled = False
+        
+        # Violation counters
+        self.upper_force_violations = 0
+        self.stiffness_violations = 0
+        
         # Plot widgets
         self.plot_widget: Optional[pg.GraphicsLayoutWidget] = None
         self.plots = {}
         self.curves = {}
+        self.threshold_lines = {}  # Store threshold line items
         
         # Update timer
         self.update_timer = QTimer()
@@ -78,6 +93,27 @@ class LivePlotter(QObject):
         self.curves['force_upper'] = self.plots['forces'].plot(
             pen=pg.mkPen(color='r', width=2), name='Upper Force [N]')
         
+        # Add scatter plot for Upper Force violations (initially empty)
+        self.curves['force_upper_violations'] = self.plots['forces'].plot(
+            pen=None, 
+            symbol='o', 
+            symbolBrush='r', 
+            symbolPen='r',
+            symbolSize=10, 
+            name='Upper Force Violations')
+        
+        # Add threshold lines for Upper Force (initially invisible)
+        self.threshold_lines['upper_force_upper'] = pg.InfiniteLine(
+            angle=0, movable=False, 
+            pen=pg.mkPen(color='r', width=2, style=pg.QtCore.Qt.DashLine))
+        self.threshold_lines['upper_force_lower'] = pg.InfiniteLine(
+            angle=0, movable=False, 
+            pen=pg.mkPen(color='r', width=2, style=pg.QtCore.Qt.DashLine))
+        self.plots['forces'].addItem(self.threshold_lines['upper_force_upper'])
+        self.plots['forces'].addItem(self.threshold_lines['upper_force_lower'])
+        self.threshold_lines['upper_force_upper'].setVisible(False)
+        self.threshold_lines['upper_force_lower'].setVisible(False)
+        
         # Plot 2: Travel measurements vs Cycles (Travel at Upper + Travel 1 + Travel 2)
         self.plots['travel'] = self.plot_widget.addPlot(row=1, col=0, title="Travel Measurements vs Cycles")
         self.plots['travel'].setLabel('left', 'Travel', units='mm')
@@ -102,6 +138,27 @@ class LivePlotter(QObject):
         # Create curve for stiffness plot
         self.curves['loss_stiffness'] = self.plots['stiffness'].plot(
             pen=pg.mkPen(color=(255, 140, 0), width=2))
+        
+        # Add scatter plot for Stiffness violations (initially empty)
+        self.curves['stiffness_violations'] = self.plots['stiffness'].plot(
+            pen=None, 
+            symbol='o', 
+            symbolBrush=(255, 140, 0), 
+            symbolPen=(255, 140, 0),
+            symbolSize=10, 
+            name='Stiffness Violations')
+        
+        # Add threshold lines for Loss of Stiffness (initially invisible)
+        self.threshold_lines['stiffness_upper'] = pg.InfiniteLine(
+            angle=0, movable=False, 
+            pen=pg.mkPen(color=(255, 140, 0), width=2, style=pg.QtCore.Qt.DashLine))
+        self.threshold_lines['stiffness_lower'] = pg.InfiniteLine(
+            angle=0, movable=False, 
+            pen=pg.mkPen(color=(255, 140, 0), width=2, style=pg.QtCore.Qt.DashLine))
+        self.plots['stiffness'].addItem(self.threshold_lines['stiffness_upper'])
+        self.plots['stiffness'].addItem(self.threshold_lines['stiffness_lower'])
+        self.threshold_lines['stiffness_upper'].setVisible(False)
+        self.threshold_lines['stiffness_lower'].setVisible(False)
         
         # Configure auto-ranging
         if self.config.auto_range:
@@ -143,10 +200,33 @@ class LivePlotter(QObject):
         try:
             # Convert deques to numpy arrays for efficient plotting
             cycles_array = np.array(self.cycles)
+            force_upper_array = np.array(self.force_upper)
+            stiffness_array = np.array(self.loss_of_stiffness)
             
             # Update forces plot (Plot 1)
             self.curves['force_lower'].setData(cycles_array, np.array(self.force_lower))
-            self.curves['force_upper'].setData(cycles_array, np.array(self.force_upper))
+            self.curves['force_upper'].setData(cycles_array, force_upper_array)
+            
+            # Check Upper Force thresholds and highlight violations
+            if self.upper_force_thresholds_enabled:
+                # Find violations
+                violations_mask = (force_upper_array > self.upper_force_upper_limit) | \
+                                 (force_upper_array < self.upper_force_lower_limit)
+                
+                # Count violations
+                self.upper_force_violations = np.sum(violations_mask)
+                
+                # Get violation points
+                if self.upper_force_violations > 0:
+                    violation_cycles = cycles_array[violations_mask]
+                    violation_forces = force_upper_array[violations_mask]
+                    self.curves['force_upper_violations'].setData(violation_cycles, violation_forces)
+                else:
+                    self.curves['force_upper_violations'].setData([], [])
+            else:
+                # Clear violations if thresholds disabled
+                self.curves['force_upper_violations'].setData([], [])
+                self.upper_force_violations = 0
             
             # Update travel plot (Plot 2)
             self.curves['travel_at_upper'].setData(cycles_array, np.array(self.travel_at_upper))
@@ -154,7 +234,28 @@ class LivePlotter(QObject):
             self.curves['travel_2'].setData(cycles_array, np.array(self.travel_2))
             
             # Update loss of stiffness plot (Plot 3)
-            self.curves['loss_stiffness'].setData(cycles_array, np.array(self.loss_of_stiffness))
+            self.curves['loss_stiffness'].setData(cycles_array, stiffness_array)
+            
+            # Check Stiffness thresholds and highlight violations
+            if self.stiffness_thresholds_enabled:
+                # Find violations
+                violations_mask = (stiffness_array > self.stiffness_upper_limit) | \
+                                 (stiffness_array < self.stiffness_lower_limit)
+                
+                # Count violations
+                self.stiffness_violations = np.sum(violations_mask)
+                
+                # Get violation points
+                if self.stiffness_violations > 0:
+                    violation_cycles = cycles_array[violations_mask]
+                    violation_stiffness = stiffness_array[violations_mask]
+                    self.curves['stiffness_violations'].setData(violation_cycles, violation_stiffness)
+                else:
+                    self.curves['stiffness_violations'].setData([], [])
+            else:
+                # Clear violations if thresholds disabled
+                self.curves['stiffness_violations'].setData([], [])
+                self.stiffness_violations = 0
             
             self.points_plotted = len(cycles_array)
             
@@ -175,18 +276,25 @@ class LivePlotter(QObject):
         for curve in self.curves.values():
             curve.setData([], [])
         
+        # Reset counters
         self.points_received = 0
         self.points_plotted = 0
+        self.upper_force_violations = 0
+        self.stiffness_violations = 0
         
         print("[LivePlotter] Cleared all plots")
     
     def get_statistics(self) -> dict:
-        """Get plotting statistics"""
+        """Get plotting statistics including threshold violations"""
         return {
             'points_received': self.points_received,
             'points_plotted': self.points_plotted,
             'buffer_size': len(self.cycles),
-            'update_interval_ms': self.config.update_interval_ms
+            'update_interval_ms': self.config.update_interval_ms,
+            'upper_force_violations': self.upper_force_violations,
+            'upper_force_thresholds_enabled': self.upper_force_thresholds_enabled,
+            'stiffness_violations': self.stiffness_violations,
+            'stiffness_thresholds_enabled': self.stiffness_thresholds_enabled
         }
     
     def set_update_interval(self, interval_ms: int):
@@ -213,3 +321,59 @@ class LivePlotter(QObject):
                 plot.enableAutoRange()
             else:
                 plot.disableAutoRange()
+    
+    def set_upper_force_thresholds(self, upper_limit: float, lower_limit: float, enabled: bool):
+        """
+        Set thresholds for Upper Force plot
+        
+        Args:
+            upper_limit: Upper threshold value [N]
+            lower_limit: Lower threshold value [N]
+            enabled: Enable threshold checking
+        """
+        self.upper_force_upper_limit = upper_limit
+        self.upper_force_lower_limit = lower_limit
+        self.upper_force_thresholds_enabled = enabled
+        
+        # Show/hide threshold lines
+        if enabled and self.threshold_lines:
+            self.threshold_lines['upper_force_upper'].setVisible(True)
+            self.threshold_lines['upper_force_upper'].setValue(upper_limit)
+            self.threshold_lines['upper_force_lower'].setVisible(True)
+            self.threshold_lines['upper_force_lower'].setValue(lower_limit)
+        elif self.threshold_lines:
+            self.threshold_lines['upper_force_upper'].setVisible(False)
+            self.threshold_lines['upper_force_lower'].setVisible(False)
+        
+        # Reset violation counter
+        self.upper_force_violations = 0
+        
+        print(f"[LivePlotter] Upper Force thresholds: [{lower_limit}, {upper_limit}] N, Enabled: {enabled}")
+    
+    def set_stiffness_thresholds(self, upper_limit: float, lower_limit: float, enabled: bool):
+        """
+        Set thresholds for Loss of Stiffness plot
+        
+        Args:
+            upper_limit: Upper threshold value [%]
+            lower_limit: Lower threshold value [%]
+            enabled: Enable threshold checking
+        """
+        self.stiffness_upper_limit = upper_limit
+        self.stiffness_lower_limit = lower_limit
+        self.stiffness_thresholds_enabled = enabled
+        
+        # Show/hide threshold lines
+        if enabled and self.threshold_lines:
+            self.threshold_lines['stiffness_upper'].setVisible(True)
+            self.threshold_lines['stiffness_upper'].setValue(upper_limit)
+            self.threshold_lines['stiffness_lower'].setVisible(True)
+            self.threshold_lines['stiffness_lower'].setValue(lower_limit)
+        elif self.threshold_lines:
+            self.threshold_lines['stiffness_upper'].setVisible(False)
+            self.threshold_lines['stiffness_lower'].setVisible(False)
+        
+        # Reset violation counter
+        self.stiffness_violations = 0
+        
+        print(f"[LivePlotter] Stiffness thresholds: [{lower_limit}, {upper_limit}] %, Enabled: {enabled}")
