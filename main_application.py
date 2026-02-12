@@ -2,7 +2,7 @@
 Main Application - Fatigue Tester Data Acquisition System
 Orchestrates all components with PyQt5 GUI
 
-Version 2.1 - Added intelligent line filtering for header/config lines
+Version 2.2 - Added COM port auto-detection with port selection dialog
 """
 
 import sys
@@ -22,6 +22,8 @@ from data_parser import DataParser
 from serial_reader import SerialReader, MockSerialReader
 from data_logger import DataLogger
 from live_plotter import LivePlotter
+from serial_port_detector import get_port_detector
+from port_selection_dialog import PortSelectionDialog
 
 
 class DataProcessorWorker(QThread):
@@ -177,6 +179,9 @@ class MainWindow(QMainWindow):
         self.logger = DataLogger(self.log_config)
         self.plotter = LivePlotter(self.plot_config)
         
+        # Initialize port detector for COM port detection (v2.2)
+        self.port_detector = get_port_detector()
+        
         # Serial reader (will be created on connect)
         self.serial_reader = None
         self.processor_worker = None
@@ -278,34 +283,56 @@ class MainWindow(QMainWindow):
         self.stats_timer.start(1000)  # Update every second
     
     def create_connection_group(self) -> QGroupBox:
-        """Create connection settings group"""
+        """Create connection settings group with port detection (v2.2)"""
         group = QGroupBox("Connection Settings")
         layout = QGridLayout()
         
-        # Port selection
+        # === PORT SELECTION (ENHANCED WITH AUTO-DETECTION) ===
         layout.addWidget(QLabel("COM Port:"), 0, 0)
         self.port_combo = QComboBox()
         self.port_combo.setEditable(True)
-        self.port_combo.addItems(['COM1', 'COM2', 'COM3', 'COM4', 'COM5', 
-                                  'COM6', 'COM7', 'COM8', 'COM9', 'COM10'])
+        
+        # Auto-detect ports on startup
+        try:
+            detected_ports = self.port_detector.get_port_names()
+            if detected_ports:
+                self.port_combo.addItems(detected_ports)
+                self.log_status(f"Auto-detected ports: {', '.join(detected_ports)}")
+            else:
+                # Fallback to defaults if no ports detected
+                self.port_combo.addItems(['COM1', 'COM2', 'COM3', 'COM4', 'COM5', 
+                                          'COM6', 'COM7', 'COM8', 'COM9', 'COM10'])
+                self.log_status("No ports detected, using default list")
+        except Exception as e:
+            # Fallback if detection fails completely
+            self.log_error(f"Port detection error: {e}")
+            self.port_combo.addItems(['COM1', 'COM2', 'COM3', 'COM4', 'COM5', 
+                                      'COM6', 'COM7', 'COM8', 'COM9', 'COM10'])
+        
         self.port_combo.setCurrentText(self.serial_config.port)
         layout.addWidget(self.port_combo, 0, 1)
         
-        # Baudrate
+        # === BAUDRATE ===
         layout.addWidget(QLabel("Baudrate:"), 1, 0)
         self.baudrate_combo = QComboBox()
         self.baudrate_combo.addItems(['4800', '9600', '19200', '38400', '57600', '115200'])
         self.baudrate_combo.setCurrentText(str(self.serial_config.baudrate))
         layout.addWidget(self.baudrate_combo, 1, 1)
         
-        # Connect button
+        # === CONNECT BUTTON ===
         self.connect_btn = QPushButton("Connect")
         self.connect_btn.clicked.connect(self.toggle_connection)
         layout.addWidget(self.connect_btn, 2, 0, 1, 2)
         
-        # Mock mode checkbox
+        # === DETECT PORTS BUTTON (NEW - v2.2) ===
+        self.list_ports_btn = QPushButton("📋 Detect Ports")
+        self.list_ports_btn.setToolTip("Scan for available COM ports and select one")
+        self.list_ports_btn.clicked.connect(self.on_list_ports_clicked)
+        layout.addWidget(self.list_ports_btn, 3, 0, 1, 2)
+        
+        # === MOCK MODE ===
         self.mock_mode_check = QCheckBox("Use Mock Data (Testing)")
-        layout.addWidget(self.mock_mode_check, 3, 0, 1, 2)
+        layout.addWidget(self.mock_mode_check, 4, 0, 1, 2)
         
         group.setLayout(layout)
         return group
@@ -479,6 +506,34 @@ class MainWindow(QMainWindow):
             self.disconnect_serial()
         else:
             self.connect_serial()
+    
+    def on_list_ports_clicked(self):
+        """
+        Handle 'Detect Ports' button click.
+        Opens port selection dialog (v2.2).
+        """
+        self.log_status("User clicked 'Detect Ports' button")
+        
+        # Create and show port selection dialog
+        dialog = PortSelectionDialog(self, self.port_detector)
+        dialog.port_selected.connect(self.on_port_selected)
+        dialog.exec_()
+    
+    def on_port_selected(self, port_name: str):
+        """
+        Handle port selection from dialog.
+        Updates combo box and status (v2.2).
+        
+        Args:
+            port_name: Selected port name (e.g., 'COM3', '/dev/ttyUSB0')
+        """
+        self.log_status(f"Port selected from dialog: {port_name}")
+        
+        # Update combo box with selected port
+        self.port_combo.setCurrentText(port_name)
+        
+        # Update status bar
+        self.update_status(f"Selected port: {port_name}")
     
     def connect_serial(self):
         """Connect to serial port or start mock reader"""
@@ -733,12 +788,20 @@ class MainWindow(QMainWindow):
     def log_status(self, message: str):
         """Log status message"""
         timestamp = time.strftime("%H:%M:%S")
-        self.status_log.append(f"[{timestamp}] {message}")
+        # Only log if status_log has been created
+        if hasattr(self, 'status_log') and self.status_log:
+            self.status_log.append(f"[{timestamp}] {message}")
+        else:
+            print(f"[{timestamp}] {message}")
     
     def log_error(self, message: str):
         """Log error message"""
         timestamp = time.strftime("%H:%M:%S")
-        self.status_log.append(f"[{timestamp}] <span style='color: red;'><b>ERROR:</b> {message}</span>")
+        # Only log if status_log has been created
+        if hasattr(self, 'status_log') and self.status_log:
+            self.status_log.append(f"[{timestamp}] <span style='color: red;'><b>ERROR:</b> {message}</span>")
+        else:
+            print(f"[{timestamp}] ERROR: {message}")
     
     def update_status(self, message: str):
         """Update status bar"""
@@ -770,7 +833,7 @@ class MainWindow(QMainWindow):
 <ul>
 <li><b>Plot 1 - Forces:</b> Lower Force and Upper Force vs. Cycles</li>
 <li><b>Plot 2 - Travel Measurements:</b> Travel at Upper Force, Additional Travel 1, and Additional Travel 2 vs. Cycles</li>
-<li><b>Plot 3 - Loss of Stiffness:</b> Calculated as (Additional Travel 2 / Travel at Upper Force) ÃƒÆ’Ã¢â‚¬â€ 100%</li>
+<li><b>Plot 3 - Loss of Stiffness:</b> Calculated as (Additional Travel 2 / Travel at Upper Force) ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â 100%</li>
 </ul>
 
 <h3>Data Logging</h3>
@@ -927,15 +990,15 @@ with thread-safe communication.</p>
 
 <h3>Updates in V2:</h3>
 <ul>
-<li>Ã¢Å“â€œ Updated field naming (position 1, position 2, travel 1, travel 2)</li>
-<li>Ã¢Å“â€œ New Plot 2: Travel at Upper + Travel 1 + Travel 2</li>
-<li>Ã¢Å“â€œ New Plot 3: Loss of Stiffness % calculation</li>
-<li>Ã¢Å“â€œ Allow negative values for force and position</li>
-<li>Ã¢Å“â€œ Plot unlimited data points (no cutoff)</li>
-<li>Ã¢Å“â€œ Added Help menu</li>
-<li>Ã¢Å“â€œ Added Version menu</li>
-<li>Ã¢Å“â€œ Default baudrate changed to 115200</li>
-<li>Ã¢Å“â€œ Added "Serial Data Logger and Plotter - User Manual" menu item</li>
+<li>ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Updated field naming (position 1, position 2, travel 1, travel 2)</li>
+<li>ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ New Plot 2: Travel at Upper + Travel 1 + Travel 2</li>
+<li>ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ New Plot 3: Loss of Stiffness % calculation</li>
+<li>ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Allow negative values for force and position</li>
+<li>ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Plot unlimited data points (no cutoff)</li>
+<li>ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Added Help menu</li>
+<li>ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Added Version menu</li>
+<li>ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Default baudrate changed to 115200</li>
+<li>ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Added "Serial Data Logger and Plotter - User Manual" menu item</li>
 </ul>
 
 <h3>Python Requirements:</h3>
