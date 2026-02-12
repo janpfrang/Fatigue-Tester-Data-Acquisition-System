@@ -2,7 +2,11 @@
 Main Application - Fatigue Tester Data Acquisition System
 Orchestrates all components with PyQt5 GUI
 
-Version 2.2 - Added COM port auto-detection with port selection dialog
+Version 2.2 - February 12, 2026
+- Added COM port auto-detection with port selection dialog
+- Added header/configuration logging to preserve test traceability
+- Updated threshold feature implementation with violation detection
+- Complete test metadata preservation in CSV files
 """
 
 import sys
@@ -164,7 +168,7 @@ class MainWindow(QMainWindow):
     
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Fatigue Tester Data Acquisition System v2.0")
+        self.setWindowTitle("Fatigue Tester Data Acquisition System v2.2")
         self.setGeometry(100, 100, 1400, 900)
         
         # Initialize configurations
@@ -230,6 +234,13 @@ class MainWindow(QMainWindow):
         # Version info action
         version_action = version_menu.addAction('Version Information')
         version_action.triggered.connect(self.show_version)
+        
+        # Advanced Options menu (NEW)
+        advanced_menu = menubar.addMenu('Advanced Options')
+        
+        # Advanced options action
+        advanced_action = advanced_menu.addAction('Advanced Settings')
+        advanced_action.triggered.connect(self.show_advanced_options)
     
     def setup_ui(self):
         """Setup the user interface"""
@@ -319,20 +330,23 @@ class MainWindow(QMainWindow):
         self.baudrate_combo.setCurrentText(str(self.serial_config.baudrate))
         layout.addWidget(self.baudrate_combo, 1, 1)
         
-        # === CONNECT BUTTON ===
+        # === CONNECT AND DETECT PORTS BUTTONS (SIDE BY SIDE) ===
+        button_layout = QHBoxLayout()
+        
         self.connect_btn = QPushButton("Connect")
         self.connect_btn.clicked.connect(self.toggle_connection)
-        layout.addWidget(self.connect_btn, 2, 0, 1, 2)
+        button_layout.addWidget(self.connect_btn)
         
-        # === DETECT PORTS BUTTON (NEW - v2.2) ===
-        self.list_ports_btn = QPushButton("📋 Detect Ports")
+        self.list_ports_btn = QPushButton("🔍 Detect Ports")
         self.list_ports_btn.setToolTip("Scan for available COM ports and select one")
         self.list_ports_btn.clicked.connect(self.on_list_ports_clicked)
-        layout.addWidget(self.list_ports_btn, 3, 0, 1, 2)
+        button_layout.addWidget(self.list_ports_btn)
+        
+        layout.addLayout(button_layout, 2, 0, 1, 2)
         
         # === MOCK MODE ===
         self.mock_mode_check = QCheckBox("Use Mock Data (Testing)")
-        layout.addWidget(self.mock_mode_check, 4, 0, 1, 2)
+        layout.addWidget(self.mock_mode_check, 3, 0, 1, 2)
         
         group.setLayout(layout)
         return group
@@ -370,6 +384,10 @@ class MainWindow(QMainWindow):
         group = QGroupBox("Plot Settings")
         layout = QGridLayout()
         
+        # Add spacing between rows to prevent overlap of taller widgets (32px)
+        layout.setSpacing(8)  # Space between rows and columns
+        layout.setRowMinimumHeight(0, 32)   # Ensure each row has minimum height
+        
         # Update interval
         layout.addWidget(QLabel("Update Interval (ms):"), 0, 0)
         self.update_interval_spin = QSpinBox()
@@ -377,6 +395,24 @@ class MainWindow(QMainWindow):
         self.update_interval_spin.setValue(self.plot_config.update_interval_ms)
         self.update_interval_spin.setSingleStep(100)
         self.update_interval_spin.valueChanged.connect(self.on_update_interval_changed)
+        # Improve readability
+        self.update_interval_spin.setMinimumHeight(28)
+        font = self.update_interval_spin.font()
+        font.setPointSize(8)
+        self.update_interval_spin.setFont(font)
+        # Add Qt stylesheet with margin/border spacing for visual separation
+        self.update_interval_spin.setStyleSheet(
+            "QSpinBox {"
+            "  margin: 4px 2px 4px 2px;"
+            "  padding: 3px;"
+            "  border: 1px solid #cccccc;"
+            "  border-radius: 2px;"
+            "  background-color: #ffffff;"
+            "}"
+            "QSpinBox::up-button, QSpinBox::down-button {"
+            "  width: 0px;"
+            "}"
+        )
         layout.addWidget(self.update_interval_spin, 0, 1)
         
         # Auto-range checkbox
@@ -415,6 +451,24 @@ class MainWindow(QMainWindow):
         self.upper_force_upper_limit_spin.setSingleStep(10.0)
         self.upper_force_upper_limit_spin.valueChanged.connect(self.on_upper_force_threshold_changed)
         self.upper_force_upper_limit_spin.setEnabled(False)
+        # Improve readability
+        self.upper_force_upper_limit_spin.setMinimumHeight(28)
+        font = self.upper_force_upper_limit_spin.font()
+        font.setPointSize(8)
+        self.upper_force_upper_limit_spin.setFont(font)
+        # Add Qt stylesheet with margin/border spacing for visual separation
+        self.upper_force_upper_limit_spin.setStyleSheet(
+            "QDoubleSpinBox {"
+            "  margin: 4px 2px 4px 2px;"
+            "  padding: 3px;"
+            "  border: 1px solid #cccccc;"
+            "  border-radius: 2px;"
+            "  background-color: #ffffff;"
+            "}"
+            "QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {"
+            "  width: 0px;"
+            "}"
+        )
         layout.addWidget(self.upper_force_upper_limit_spin, 6, 1)
         
         # Upper Force - Lower Limit
@@ -426,6 +480,24 @@ class MainWindow(QMainWindow):
         self.upper_force_lower_limit_spin.setSingleStep(10.0)
         self.upper_force_lower_limit_spin.valueChanged.connect(self.on_upper_force_threshold_changed)
         self.upper_force_lower_limit_spin.setEnabled(False)
+        # Improve readability
+        self.upper_force_lower_limit_spin.setMinimumHeight(28)
+        font = self.upper_force_lower_limit_spin.font()
+        font.setPointSize(8)
+        self.upper_force_lower_limit_spin.setFont(font)
+        # Add Qt stylesheet with margin/border spacing for visual separation
+        self.upper_force_lower_limit_spin.setStyleSheet(
+            "QDoubleSpinBox {"
+            "  margin: 4px 2px 4px 2px;"
+            "  padding: 3px;"
+            "  border: 1px solid #cccccc;"
+            "  border-radius: 2px;"
+            "  background-color: #ffffff;"
+            "}"
+            "QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {"
+            "  width: 0px;"
+            "}"
+        )
         layout.addWidget(self.upper_force_lower_limit_spin, 7, 1)
         
         # Separator line
@@ -451,6 +523,24 @@ class MainWindow(QMainWindow):
         self.stiffness_upper_limit_spin.setSingleStep(1.0)
         self.stiffness_upper_limit_spin.valueChanged.connect(self.on_stiffness_threshold_changed)
         self.stiffness_upper_limit_spin.setEnabled(False)
+        # Improve readability
+        self.stiffness_upper_limit_spin.setMinimumHeight(28)
+        font = self.stiffness_upper_limit_spin.font()
+        font.setPointSize(8)
+        self.stiffness_upper_limit_spin.setFont(font)
+        # Add Qt stylesheet with margin/border spacing for visual separation
+        self.stiffness_upper_limit_spin.setStyleSheet(
+            "QDoubleSpinBox {"
+            "  margin: 4px 2px 4px 2px;"
+            "  padding: 3px;"
+            "  border: 1px solid #cccccc;"
+            "  border-radius: 2px;"
+            "  background-color: #ffffff;"
+            "}"
+            "QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {"
+            "  width: 0px;"
+            "}"
+        )
         layout.addWidget(self.stiffness_upper_limit_spin, 11, 1)
         
         # Loss of Stiffness - Lower Limit
@@ -462,7 +552,33 @@ class MainWindow(QMainWindow):
         self.stiffness_lower_limit_spin.setSingleStep(1.0)
         self.stiffness_lower_limit_spin.valueChanged.connect(self.on_stiffness_threshold_changed)
         self.stiffness_lower_limit_spin.setEnabled(False)
+        # Improve readability
+        self.stiffness_lower_limit_spin.setMinimumHeight(28)
+        font = self.stiffness_lower_limit_spin.font()
+        font.setPointSize(8)
+        self.stiffness_lower_limit_spin.setFont(font)
+        # Add Qt stylesheet with margin/border spacing for visual separation
+        self.stiffness_lower_limit_spin.setStyleSheet(
+            "QDoubleSpinBox {"
+            "  margin: 4px 2px 4px 2px;"
+            "  padding: 3px;"
+            "  border: 1px solid #cccccc;"
+            "  border-radius: 2px;"
+            "  background-color: #ffffff;"
+            "}"
+            "QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {"
+            "  width: 0px;"
+            "}"
+        )
         layout.addWidget(self.stiffness_lower_limit_spin, 12, 1)
+        
+        # Set column stretch factors for proper layout at all window sizes
+        # Column 0 (labels): Fixed width - don't expand with window
+        layout.setColumnStretch(0, 0)
+        layout.setColumnMinimumWidth(0, 140)  # Minimum width for label text
+        
+        # Column 1 (input fields): Flexible - expand to fill available space
+        layout.setColumnStretch(1, 1)
         
         group.setLayout(layout)
         return group
@@ -474,7 +590,7 @@ class MainWindow(QMainWindow):
         
         self.stats_text = QTextEdit()
         self.stats_text.setReadOnly(True)
-        self.stats_text.setMaximumHeight(150)
+        self.stats_text.setMaximumHeight(100)
         font = QFont("Courier New", 9)
         self.stats_text.setFont(font)
         layout.addWidget(self.stats_text)
@@ -489,7 +605,7 @@ class MainWindow(QMainWindow):
         
         self.status_log = QTextEdit()
         self.status_log.setReadOnly(True)
-        self.status_log.setMaximumHeight(200)
+        self.status_log.setMaximumHeight(120)
         layout.addWidget(self.status_log)
         
         # Clear log button
@@ -653,6 +769,7 @@ class MainWindow(QMainWindow):
             error_desc = self.parser.get_error_description(data.error_code)
             self.log_error(f"Cycle {data.cycles}: {error_desc}")
     
+    
     def on_watchdog_timeout(self, elapsed):
         """Handle watchdog timeout"""
         self.log_error(f"No data received for {elapsed:.1f} seconds!")
@@ -808,77 +925,242 @@ class MainWindow(QMainWindow):
         self.statusBar.showMessage(message)
     
     def show_help(self):
-        """Show help documentation"""
+        """Show help documentation for v2.2"""
         help_text = """
-<h2>Fatigue Tester Data Acquisition System - Help</h2>
+<h2>Fatigue Tester Data Acquisition System v2.2 - Help</h2>
 
-<h3>Quick Start</h3>
+<h3>Quick Start (5 Minutes)</h3>
 <ol>
 <li><b>Connect to Hardware:</b>
    <ul>
-   <li>Select COM port from dropdown</li>
-   <li>Select baudrate (default: 9600)</li>
+   <li>Click "Detect Ports" button to find available COM ports</li>
+   <li>Select the COM port from the dialog</li>
+   <li>Verify baudrate is set to 115200</li>
    <li>Click "Connect" button</li>
    </ul>
 </li>
 <li><b>Testing Without Hardware:</b>
    <ul>
-   <li>Check "Use Mock Data (Testing)"</li>
-   <li>Click "Connect" to see simulated data</li>
+   <li>Check "Use Mock Data (Testing)" checkbox</li>
+   <li>Click "Connect" to see simulated test data</li>
+   <li>All features work identically with mock data</li>
+   </ul>
+</li>
+<li><b>Data is automatically logged:</b>
+   <ul>
+   <li>CSV file created in logs/ directory with timestamp</li>
+   <li>Includes device headers and all test data</li>
+   <li>Never overwrites existing files</li>
    </ul>
 </li>
 </ol>
 
-<h3>Plot Descriptions</h3>
+<h3>Three Real-Time Plots</h3>
 <ul>
-<li><b>Plot 1 - Forces:</b> Lower Force and Upper Force vs. Cycles</li>
-<li><b>Plot 2 - Travel Measurements:</b> Travel at Upper Force, Additional Travel 1, and Additional Travel 2 vs. Cycles</li>
-<li><b>Plot 3 - Loss of Stiffness:</b> Calculated as (Additional Travel 2 / Travel at Upper Force) ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â 100%</li>
+<li><b>Plot 1 - Forces vs Cycles:</b>
+   <ul>
+   <li>Blue line: Lower Force [N]</li>
+   <li>Red line: Upper Force [N]</li>
+   </ul>
+</li>
+<li><b>Plot 2 - Travel Measurements vs Cycles:</b>
+   <ul>
+   <li>Green line: Travel at Upper Force [mm]</li>
+   <li>Cyan line: Additional Travel 1 [mm]</li>
+   <li>Magenta line: Additional Travel 2 [mm]</li>
+   </ul>
+</li>
+<li><b>Plot 3 - Loss of Stiffness vs Cycles:</b>
+   <ul>
+   <li>Orange line: Loss of Stiffness [%]</li>
+   <li>Calculated as: (Travel_2 / Travel_at_Upper) Ã— 100</li>
+   </ul>
+</li>
 </ul>
 
-<h3>Data Logging</h3>
+<h3>Threshold Monitoring (New in v2.2)</h3>
+<p>Monitor critical parameters with automatic violation detection:</p>
 <ul>
-<li>Data is automatically logged to CSV files in the logs/ directory</li>
-<li>Files are named with timestamps: fatigue_test_YYYYMMDD_HHMMSS.csv</li>
-<li>Use "Save Log As..." to save with a custom name</li>
-<li>Files are never overwritten</li>
+<li><b>Upper Force Thresholds:</b>
+   <ul>
+   <li>Set Upper and Lower limits [N]</li>
+   <li>Enable to activate monitoring</li>
+   <li>Out-of-range points highlighted in red</li>
+   </ul>
+</li>
+<li><b>Loss of Stiffness Thresholds:</b>
+   <ul>
+   <li>Set Upper and Lower limits [%]</li>
+   <li>Enable to activate monitoring</li>
+   <li>Out-of-range points highlighted in orange</li>
+   </ul>
+</li>
+<li><b>Real-time Statistics:</b>
+   <ul>
+   <li>Violation count displayed automatically</li>
+   <li>Updates as new data arrives</li>
+   </ul>
+</li>
 </ul>
 
 <h3>Plot Controls</h3>
 <ul>
-<li><b>Update Interval:</b> Change how often plots refresh (100-5000 ms)</li>
-<li><b>Auto Range:</b> Automatically adjust axis ranges</li>
-<li><b>Clear Plots:</b> Clear displayed data (does not affect logged data)</li>
+<li><b>Update Interval [ms]:</b> How often plots refresh (100-5000 ms, default 1000)</li>
+<li><b>Auto Range:</b> Automatically adjust axes to show all data</li>
+<li><b>Clear Plots:</b> Remove displayed data (does not affect logged CSV)</li>
+</ul>
+
+<h3>Data Logging Features (v2.2)</h3>
+<ul>
+<li><b>Automatic File Creation:</b>
+   <ul>
+   <li>Files named: fatigue_test_YYYYMMDD_HHMMSS.csv</li>
+   <li>Located in: logs/ subdirectory</li>
+   </ul>
+</li>
+<li><b>Complete Header Logging:</b>
+   <ul>
+   <li>Device identification (ID, model)</li>
+   <li>Display information</li>
+   <li>Configuration parameters (CNF line)</li>
+   <li>Written as comments at top of CSV</li>
+   </ul>
+</li>
+<li><b>Test Traceability:</b>
+   <ul>
+   <li>Device ID preserved for audit trail</li>
+   <li>Setup parameters enable test reproducibility</li>
+   <li>Standard CSV comment format (# prefix)</li>
+   <li>Compatible with Excel, MATLAB, Python, pandas</li>
+   </ul>
+</li>
+<li><b>Save As Option:</b>
+   <ul>
+   <li>Save current log with custom filename</li>
+   <li>Original log continues running</li>
+   </ul>
+</li>
+<li><b>Start New Log:</b>
+   <ul>
+   <li>Close current log and start fresh file</li>
+   <li>Useful for multi-part tests</li>
+   </ul>
+</li>
+</ul>
+
+<h3>Serial Port Detection (v2.2)</h3>
+<ul>
+<li><b>Auto-Detection:</b> System automatically finds available COM ports on startup</li>
+<li><b>Port Selection Dialog:</b> Click "Detect Ports" for interactive port chooser</li>
+<li><b>Port Status:</b> Shows which ports are available (can be opened)</li>
+<li><b>Fallback:</b> Manual entry supported if auto-detection fails</li>
+</ul>
+
+<h3>Statistics Panel</h3>
+<p>Real-time monitoring of system operation:</p>
+<ul>
+<li><b>Connection Time:</b> Elapsed time since connection</li>
+<li><b>Lines Received:</b> Total raw serial data lines</li>
+<li><b>Points Logged:</b> Successfully parsed data points in CSV</li>
+<li><b>Points Plotted:</b> Data points currently displayed</li>
+<li><b>Parse Errors:</b> Malformed data rejected</li>
+<li><b>Threshold Violations:</b> When thresholds enabled</li>
 </ul>
 
 <h3>Troubleshooting</h3>
 <ul>
-<li><b>Connection Failed:</b> Check COM port and baudrate settings</li>
-<li><b>No Data Received:</b> Check cable connection and equipment settings</li>
-<li><b>Watchdog Timeout:</b> No data received for 5 seconds - check connection</li>
+<li><b>Connection Failed:</b>
+   <ul>
+   <li>Check COM port is available (not used by other software)</li>
+   <li>Verify baudrate matches equipment (usually 115200)</li>
+   <li>Try clicking "Detect Ports" to find correct port</li>
+   <li>Check cable connection</li>
+   </ul>
+</li>
+<li><b>No Data Received:</b>
+   <ul>
+   <li>Verify equipment is powered on and transmitting</li>
+   <li>Check cable connections</li>
+   <li>Try different baudrates (9600, 38400, 57600, 115200)</li>
+   <li>Consult equipment manual for settings</li>
+   </ul>
+</li>
+<li><b>Watchdog Timeout Warning:</b>
+   <ul>
+   <li>Message: "No data received for X seconds!"</li>
+   <li>Indicates connection loss or test stopped</li>
+   <li>Check equipment status</li>
+   <li>Verify cable integrity</li>
+   </ul>
+</li>
+<li><b>Parse Errors:</b>
+   <ul>
+   <li>Usually indicates baudrate mismatch</li>
+   <li>Check Raw_Data column in CSV to see actual received data</li>
+   <li>Try different baudrates</li>
+   </ul>
+</li>
 </ul>
 
-<h3>Data Format</h3>
-Expected serial format: <code>DTA;31422;182;263;0;793;2238;0;611;0;!</code>
-<br>
-Fields are semicolon-separated with specific decimal place encoding.
+<h3>CSV File Format</h3>
+<p>Logged CSV files contain three sections:</p>
+<ol>
+<li><b>Header Section (Comments):</b> Device info, configuration parameters</li>
+<li><b>Column Header Row:</b> Field names (Timestamp, Status, Cycles, etc.)</li>
+<li><b>Data Rows:</b> One row per cycle with timestamp</li>
+</ol>
+
+<h3>Loss of Stiffness Calculation</h3>
+<p><code>Loss of Stiffness [%] = (Travel_2 / Travel_at_Upper) Ã— 100</code></p>
+<ul>
+<li>Indicates material degradation during fatigue test</li>
+<li>Increasing trend shows cumulative fatigue damage</li>
+<li>Automatically calculated for each data point</li>
+<li>Included in CSV export</li>
+</ul>
+
+<h3>Data Format (Serial)</h3>
+<p>Expected format from fatigue tester:</p>
+<p><code>DTA;31422;182;263;0;793;2238;0;611;0;!</code></p>
+<ul>
+<li>11 semicolon-separated fields</li>
+<li>Ending with exclamation mark (!)</li>
+<li>Automatically parsed and converted</li>
+<li>Supports negative values</li>
+</ul>
+
+<h3>Features in v2.2</h3>
+<ul>
+<li>âœ“ Complete header/configuration logging</li>
+<li>âœ“ Test traceability with device ID preservation</li>
+<li>âœ“ Threshold monitoring with violation detection</li>
+<li>âœ“ COM port auto-detection</li>
+<li>âœ“ Intelligent line filtering (no parse errors)</li>
+<li>âœ“ Three synchronized real-time plots</li>
+<li>âœ“ Unlimited data points</li>
+<li>âœ“ Negative value support</li>
+<li>âœ“ Watchdog connection monitoring</li>
+<li>âœ“ Mock data mode for testing</li>
+<li>âœ“ Professional CSV format</li>
+<li>âœ“ Comprehensive Help and User Manual</li>
+</ul>
 
 <h3>For More Information</h3>
-See README.md and QUICKSTART.txt files in the application directory.
+<p>See "Serial Data Logger and Plotter - User Manual" in Help menu for complete documentation.</p>
 """
         
         msg = QMessageBox(self)
-        msg.setWindowTitle("Help")
+        msg.setWindowTitle("Help - Fatigue Tester v2.2")
         msg.setTextFormat(Qt.RichText)
         msg.setText(help_text)
         msg.setStandardButtons(QMessageBox.Ok)
         msg.exec_()
     
     def show_user_manual(self):
-        """Show Serial Data Logger and Plotter User Manual"""
+        """Show Serial Data Logger and Plotter User Manual (v2.2)"""
         # Load user manual from external HTML file
         import os
-        manual_path = os.path.join(os.path.dirname(__file__), 'USER_MANUAL.html')
+        manual_path = os.path.join(os.path.dirname(__file__), 'USER_MANUAL_V22.html')
         
         try:
             with open(manual_path, 'r', encoding='utf-8') as f:
@@ -888,7 +1170,7 @@ See README.md and QUICKSTART.txt files in the application directory.
             from PyQt5.QtWidgets import QDialog, QVBoxLayout, QTextBrowser, QPushButton
             
             dialog = QDialog(self)
-            dialog.setWindowTitle("User Manual - Serial Data Logger and Plotter v2.0")
+            dialog.setWindowTitle("User Manual - Serial Data Logger and Plotter v2.2")
             dialog.setGeometry(100, 100, 900, 700)
             
             layout = QVBoxLayout()
@@ -912,7 +1194,7 @@ See README.md and QUICKSTART.txt files in the application directory.
             QMessageBox.warning(
                 self,
                 "User Manual Not Found",
-                f"Could not find USER_MANUAL.html in application directory.\n\n"
+                f"Could not find USER_MANUAL_V22.html in application directory.\n\n"
                 f"Expected location: {manual_path}\n\n"
                 f"Please ensure the file is present in the same directory as the application."
             )
@@ -927,97 +1209,284 @@ See README.md and QUICKSTART.txt files in the application directory.
         """Show about dialog"""
         about_text = """
 <h2>Fatigue Tester Data Acquisition System</h2>
-<p><b>Version:</b> 2.0 (Updated for V2 Requirements)</p>
-<p><b>Date:</b> February 2026</p>
+<p><b>Version:</b> 2.2 (February 12, 2026)</p>
+<p><b>Requirements:</b> V2.2 (Header Logging and Threshold Features)</p>
 <p><b>Contact:</b> Uwe Hasenstab and Alexander Waal</p>
 
 <p>A professional data acquisition system for fatigue testing equipment with 
-real-time visualization and comprehensive data logging capabilities.</p>
+real-time visualization, comprehensive data logging, and test traceability.</p>
+
+<h3>Version 2.2 Features:</h3>
+<ul>
+<li>Complete header and configuration logging for test traceability</li>
+<li>Device ID and setup parameters preserved in every CSV file</li>
+<li>Threshold monitoring for Upper Force and Loss of Stiffness</li>
+<li>Real-time violation detection and visualization</li>
+<li>COM port auto-detection with port selection dialog</li>
+<li>Intelligent line filtering (no header parse errors)</li>
+<li>Professional CSV format with comment-based metadata</li>
+</ul>
 
 <h3>Key Features:</h3>
 <ul>
-<li>Real-time serial data acquisition</li>
-<li>Live plotting with three configurable plots</li>
-<li>Automatic CSV logging</li>
-<li>Loss of stiffness calculation</li>
+<li>Real-time serial data acquisition (0.1 - 1.0s intervals)</li>
+<li>Three synchronized real-time plots with auto-ranging</li>
+<li>Automatic CSV logging with timestamp-based naming</li>
+<li>Loss of stiffness calculation and monitoring</li>
 <li>Watchdog timer for connection monitoring</li>
-<li>Mock data mode for testing</li>
+<li>Mock data mode for testing without hardware</li>
+<li>Unlimited data points (no artificial limits)</li>
+<li>Negative value support for force and position</li>
+<li>Comprehensive Help menu and User Manual</li>
 </ul>
 
 <h3>Architecture:</h3>
 <p>Layered, event-driven design using the Producer-Consumer pattern 
-with thread-safe communication.</p>
+with thread-safe communication and hardware abstraction.</p>
 
 <h3>Technology Stack:</h3>
 <ul>
 <li>Python 3.8+</li>
-<li>PyQt5 (GUI)</li>
-<li>PyQtGraph (Plotting)</li>
-<li>pyserial (Communication)</li>
+<li>PyQt5 (GUI Framework)</li>
+<li>PyQtGraph (Real-time Plotting)</li>
+<li>pyserial (Serial Communication)</li>
+<li>pandas (Data Management)</li>
+<li>numpy (Numerical Operations)</li>
 </ul>
 
-<p><i>For support and documentation, see README.md</i></p>
+<p style="margin-top: 20px;"><i>For detailed documentation, see USER_MANUAL_V22.html</i></p>
 """
         
         msg = QMessageBox(self)
-        msg.setWindowTitle("About")
+        msg.setWindowTitle("About - Fatigue Tester v2.2")
         msg.setTextFormat(Qt.RichText)
         msg.setText(about_text)
         msg.setStandardButtons(QMessageBox.Ok)
         msg.exec_()
     
     def show_version(self):
-        """Show version information"""
+        """Show version information for v2.2"""
         version_text = """
-<h2>Version Information</h2>
+<h2>Version Information - Fatigue Tester v2.2</h2>
 
-<table border="1" cellpadding="5" style="border-collapse: collapse;">
-<tr><td><b>Application:</b></td><td>Fatigue Tester Data Acquisition System</td></tr>
-<tr><td><b>Version:</b></td><td>2.0</td></tr>
-<tr><td><b>Release Date:</b></td><td>February 2026</td></tr>
-<tr><td><b>Requirements:</b></td><td>V2 (Updated 05 Feb 2026)</td></tr>
+<table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
+<tr style="background-color: #3498db; color: white;">
+    <td><b>Application</b></td>
+    <td>Fatigue Tester Data Acquisition System</td>
+</tr>
+<tr>
+    <td><b>Current Version</b></td>
+    <td>2.2</td>
+</tr>
+<tr>
+    <td><b>Release Date</b></td>
+    <td>February 12, 2026</td>
+</tr>
+<tr>
+    <td><b>Requirements</b></td>
+    <td>SRS V2.1 (Updated 09 Feb 2026)</td>
+</tr>
+<tr>
+    <td><b>Status</b></td>
+    <td>âœ“ Stable and Ready</td>
+</tr>
 </table>
 
-<h3>Component Versions:</h3>
+<h3>Module Versions (v2.2):</h3>
 <ul>
-<li><b>Configuration Module:</b> V2 (Updated field names, baudrate 115200)</li>
-<li><b>Data Parser:</b> V2 (Allows negative values, Loss of Stiffness calc)</li>
-<li><b>Live Plotter:</b> V2 (Three plots, unlimited points)</li>
-<li><b>Data Logger:</b> V2 (Updated CSV headers)</li>
-<li><b>Serial Reader:</b> 1.0</li>
-<li><b>Main Application:</b> V2 (Added Help and Version menus, User Manual)</li>
+<li><b>Main Application:</b> V2.2 - COM port detection, threshold features, header logging</li>
+<li><b>Configuration Module:</b> V2 - Field naming, baudrate 115200</li>
+<li><b>Data Parser:</b> V2 - Negative values, Loss of Stiffness calculation</li>
+<li><b>Live Plotter:</b> V2 - Three plots, unlimited points, threshold visualization</li>
+<li><b>Data Logger:</b> V2.2 - Header/configuration logging, test traceability</li>
+<li><b>Serial Reader:</b> V1.0 - RS-232 communication with mock support</li>
+<li><b>Port Detector:</b> V1.0 - Cross-platform COM port detection</li>
+<li><b>Port Selection Dialog:</b> V1.0 - User-friendly port selection UI</li>
 </ul>
 
-<h3>Updates in V2:</h3>
+<h3>Version History:</h3>
+<table border="1" cellpadding="6" style="border-collapse: collapse; width: 100%;">
+<tr style="background-color: #ecf0f1;">
+    <td><b>Version</b></td>
+    <td><b>Date</b></td>
+    <td><b>Major Changes</b></td>
+</tr>
+<tr>
+    <td><b>2.0</b></td>
+    <td>Feb 5, 2026</td>
+    <td>Field naming, three plots, Loss of Stiffness, negative values, unlimited points</td>
+</tr>
+<tr>
+    <td><b>2.1</b></td>
+    <td>Feb 9, 2026</td>
+    <td>Line filtering, parse error elimination, statistics tracking</td>
+</tr>
+<tr>
+    <td><b>2.2</b></td>
+    <td>Feb 9, 2026</td>
+    <td>Header logging, threshold features, port auto-detection, metadata preservation</td>
+</tr>
+</table>
+
+<h3>Key Features in v2.2:</h3>
 <ul>
-<li>ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Updated field naming (position 1, position 2, travel 1, travel 2)</li>
-<li>ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ New Plot 2: Travel at Upper + Travel 1 + Travel 2</li>
-<li>ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ New Plot 3: Loss of Stiffness % calculation</li>
-<li>ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Allow negative values for force and position</li>
-<li>ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Plot unlimited data points (no cutoff)</li>
-<li>ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Added Help menu</li>
-<li>ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Added Version menu</li>
-<li>ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Default baudrate changed to 115200</li>
-<li>ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Added "Serial Data Logger and Plotter - User Manual" menu item</li>
+<li>âœ“ Header/configuration logging (device ID, setup parameters)</li>
+<li>âœ“ Complete test traceability with metadata in CSV</li>
+<li>âœ“ Threshold monitoring (Upper Force and Loss of Stiffness)</li>
+<li>âœ“ Real-time violation detection with visual markers</li>
+<li>âœ“ COM port auto-detection with selection dialog</li>
+<li>âœ“ Intelligent line filtering (no header errors)</li>
+<li>âœ“ Professional CSV format with comments</li>
+<li>âœ“ Three synchronized real-time plots</li>
+<li>âœ“ Unlimited data points (no cutoff)</li>
+<li>âœ“ Negative value support for forces/positions</li>
+<li>âœ“ Watchdog connection monitoring</li>
+<li>âœ“ Mock data mode for testing</li>
 </ul>
 
-<h3>Python Requirements:</h3>
+<h3>System Requirements:</h3>
 <ul>
-<li>Python: 3.8 or higher</li>
-<li>pyserial: >=3.5</li>
-<li>PyQt5: >=5.15.0</li>
-<li>pyqtgraph: >=0.13.0</li>
-<li>pandas: >=1.5.0</li>
-<li>numpy: >=1.23.0</li>
+<li><b>Python:</b> 3.8 or higher</li>
+<li><b>Operating System:</b> Windows 7+, Ubuntu 18.04+, macOS 10.13+</li>
+<li><b>RAM:</b> 4 GB minimum recommended</li>
+<li><b>Disk Space:</b> 100 MB</li>
 </ul>
+
+<h3>Python Dependencies:</h3>
+<ul>
+<li>pyserial >= 3.5</li>
+<li>PyQt5 >= 5.15.0</li>
+<li>pyqtgraph >= 0.13.0</li>
+<li>pandas >= 1.5.0</li>
+<li>numpy >= 1.23.0</li>
+</ul>
+
+<h3>Default Configuration:</h3>
+<ul>
+<li>COM Port: Auto-detected</li>
+<li>Baudrate: 115200</li>
+<li>Data Bits: 8</li>
+<li>Parity: None</li>
+<li>Stop Bits: 1</li>
+<li>Plot Update Interval: 1000 ms</li>
+<li>Watchdog Timeout: 5 seconds</li>
+</ul>
+
+<p style="margin-top: 20px; color: #27ae60;"><b>Status:</b> âœ“ Ready for Production</p>
 """
         
         msg = QMessageBox(self)
-        msg.setWindowTitle("Version Information")
+        msg.setWindowTitle("Version Information - v2.2")
         msg.setTextFormat(Qt.RichText)
         msg.setText(version_text)
         msg.setStandardButtons(QMessageBox.Ok)
         msg.exec_()
+    
+    def show_advanced_options(self):
+        """Show Advanced Options dialog"""
+        from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel
+        from PyQt5.QtCore import Qt, QTimer
+        
+        # Create dialog
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Advanced Options")
+        dialog.setGeometry(200, 200, 500, 350)
+        dialog.setAttribute(Qt.WA_DeleteOnClose)  # Clean up when closed
+        
+        layout = QVBoxLayout()
+        
+        # === Button: Save Plotted Data as PDF ===
+        save_pdf_btn = QPushButton("Save Plotted Data as PDF")
+        save_pdf_btn.setMinimumHeight(40)
+        save_pdf_btn.setToolTip("Export current plots to PDF file")
+        # TODO: Connect to save_plots_to_pdf() when implemented
+        layout.addWidget(save_pdf_btn)
+        
+        # === Separator ===
+        separator = QLabel("-" * 60)
+        separator.setAlignment(Qt.AlignCenter)
+        layout.addWidget(separator)
+        
+        # === Force Analysis Section ===
+        force_analysis_label = QLabel("Force Analysis")
+        force_analysis_label.setStyleSheet("font-weight: bold; font-size: 11pt;")
+        layout.addWidget(force_analysis_label)
+        
+        # Calculation: percentage of values exceeding (upper limit * 1.03)
+        calculation_layout = QVBoxLayout()
+        
+        # Title
+        calc_title = QLabel("Percentage of values exceeding (Upper Force Limit × 1.03):")
+        calc_title.setStyleSheet("font-weight: bold;")
+        calculation_layout.addWidget(calc_title)
+        
+        # Result display
+        advanced_force_violation_label = QLabel("N/A")
+        advanced_force_violation_label.setStyleSheet(
+            "background-color: #f0f0f0; "
+            "padding: 10px; "
+            "border: 1px solid #cccccc; "
+            "border-radius: 2px; "
+            "font-size: 14pt; "
+            "font-weight: bold; "
+            "color: #c62828;"
+        )
+        advanced_force_violation_label.setAlignment(Qt.AlignCenter)
+        advanced_force_violation_label.setMinimumHeight(50)
+        calculation_layout.addWidget(advanced_force_violation_label)
+        
+        layout.addLayout(calculation_layout)
+        layout.addStretch()
+        
+        # === Close Button ===
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(dialog.accept)
+        layout.addWidget(close_btn)
+        
+        dialog.setLayout(layout)
+        
+        # Timer to update calculations every second
+        update_timer = QTimer()
+        def update_calculations():
+            # Get upper force limit from threshold control
+            if not self.upper_force_threshold_check.isChecked():
+                advanced_force_violation_label.setText("Thresholds not enabled")
+                return
+            
+            upper_limit = self.upper_force_upper_limit_spin.value()
+            threshold_value = upper_limit * 1.03
+            
+            # Get plotter data
+            force_upper_list = list(self.plotter.force_upper)
+            
+            if not force_upper_list:
+                advanced_force_violation_label.setText("No data yet")
+                return
+            
+            # Calculate percentage of values exceeding threshold
+            exceeding_count = sum(1 for val in force_upper_list if val > threshold_value)
+            total_count = len(force_upper_list)
+            percentage = (exceeding_count / total_count * 100) if total_count > 0 else 0
+            
+            # Update label
+            advanced_force_violation_label.setText(
+                f"{percentage:.2f}%\n({exceeding_count} of {total_count} values)"
+            )
+        
+        update_timer.timeout.connect(update_calculations)
+        update_timer.start(500)  # Update every 500ms
+        
+        # Stop timer when dialog closes
+        def on_dialog_closed():
+            update_timer.stop()
+        
+        dialog.finished.connect(on_dialog_closed)
+        
+        # Initial update
+        update_calculations()
+        
+        dialog.exec_()
+    
     
     def closeEvent(self, event):
         """Handle window close event"""
