@@ -398,6 +398,9 @@ class MainWindow(QMainWindow):
                 # Start watchdog
                 self.watchdog.start()
                 
+                # Start plotter update timer (CRITICAL - was missing!)
+                self.plotter.start_plotting()
+                
                 # Start logger
                 log_file = self.logger.start_new_log()
                 self.logging_panel.set_log_filename(self.logger.current_filename)
@@ -417,6 +420,9 @@ class MainWindow(QMainWindow):
         try:
             # Stop watchdog
             self.watchdog.stop()
+            
+            # Stop plotter update timer
+            self.plotter.stop_plotting()
             
             # Stop processor
             if self.processor_worker:
