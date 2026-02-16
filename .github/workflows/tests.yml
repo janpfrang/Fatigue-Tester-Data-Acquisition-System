@@ -4,9 +4,11 @@ name: Automated Tests
 # When to run this workflow
 on:
   push:
-    branches: [ main, develop, master ]
+    branches: 
+      - '**'    # This matches all branches including those with slashes (e.g., feature/test)
   pull_request:
-    branches: [ main, develop, master ]
+    branches: 
+      - '**'    # This matches all branches including those with slashes (e.g., feature/test)
 
 jobs:
   test:
