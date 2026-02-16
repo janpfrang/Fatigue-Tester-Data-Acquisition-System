@@ -5,9 +5,11 @@ name: Python application
 
 on:
   push:
-    branches: [ "main" ]
+    branches: 
+      - '**'    # This matches all branches including those with slashes (e.g., feature/test)
   pull_request:
-    branches: [ "main" ]
+    branches: 
+      - '**'    # This matches all branches including those with slashes (e.g., feature/test)
 
 permissions:
   contents: read
