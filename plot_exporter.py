@@ -32,7 +32,8 @@ class PlotExporter:
     def export_to_pdf(self, filepath: str, 
                      include_metadata: bool = True,
                      threshold_monitor=None,
-                     statistics_tracker=None) -> bool:
+                     statistics_tracker=None,
+                     log_filename=None) -> bool:
         """
         Export all plots to a multi-page PDF
         
@@ -41,6 +42,7 @@ class PlotExporter:
             include_metadata: Include test metadata on first page
             threshold_monitor: Optional ThresholdMonitor for violation info
             statistics_tracker: Optional StatisticsTracker for test info
+            log_filename: Optional log filename to include in metadata
             
         Returns:
             True if successful, False otherwise
@@ -61,8 +63,11 @@ class PlotExporter:
             # Create PDF
             with PdfPages(filepath) as pdf:
                 
-                # Page 1: Forces vs Cycles
-                fig1, ax1 = plt.subplots(figsize=(11, 8.5))
+                # Page 1: All Three Plots on One Page
+                fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(11, 14))
+                fig.suptitle('Fatigue Test Results - All Plots', fontsize=16, fontweight='bold', y=0.995)
+                
+                # Plot 1: Forces vs Cycles
                 ax1.plot(cycles, force_lower, 'b-', linewidth=1.5, label='Lower Force [N]')
                 ax1.plot(cycles, force_upper, 'r-', linewidth=1.5, label='Upper Force [N]')
                 
@@ -75,39 +80,31 @@ class PlotExporter:
                                color='orange', linestyle='--', linewidth=1,
                                label=f'Lower Limit: {threshold_monitor.config.upper_force_lower_limit:.1f} N')
                 
-                ax1.set_xlabel('Cycles', fontsize=12)
-                ax1.set_ylabel('Force [N]', fontsize=12)
-                ax1.set_title('Forces vs Cycles', fontsize=14, fontweight='bold')
+                ax1.set_xlabel('Cycles', fontsize=11)
+                ax1.set_ylabel('Force [N]', fontsize=11)
+                ax1.set_title('Forces vs Cycles', fontsize=12, fontweight='bold')
                 ax1.grid(True, alpha=0.3)
-                ax1.legend(loc='best')
+                ax1.legend(loc='best', fontsize=9)
                 
                 # Add violation info if available
                 if threshold_monitor and threshold_monitor.config.upper_force_enabled:
                     violation_text = f'Violations: {threshold_monitor.force_violations}'
                     ax1.text(0.02, 0.98, violation_text, transform=ax1.transAxes,
-                            verticalalignment='top', bbox=dict(boxstyle='round', 
-                            facecolor='wheat', alpha=0.5))
+                            verticalalignment='top', fontsize=9,
+                            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
                 
-                pdf.savefig(fig1, bbox_inches='tight')
-                plt.close(fig1)
-                
-                # Page 2: Travel Measurements vs Cycles
-                fig2, ax2 = plt.subplots(figsize=(11, 8.5))
+                # Plot 2: Travel Measurements vs Cycles
                 ax2.plot(cycles, travel_at_upper, 'g-', linewidth=1.5, label='Travel at Upper [mm]')
                 ax2.plot(cycles, travel_1, 'c-', linewidth=1, label='Travel 1 [mm]', alpha=0.7)
                 ax2.plot(cycles, travel_2, 'm-', linewidth=1, label='Travel 2 [mm]', alpha=0.7)
                 
-                ax2.set_xlabel('Cycles', fontsize=12)
-                ax2.set_ylabel('Travel [mm]', fontsize=12)
-                ax2.set_title('Travel Measurements vs Cycles', fontsize=14, fontweight='bold')
+                ax2.set_xlabel('Cycles', fontsize=11)
+                ax2.set_ylabel('Travel [mm]', fontsize=11)
+                ax2.set_title('Travel Measurements vs Cycles', fontsize=12, fontweight='bold')
                 ax2.grid(True, alpha=0.3)
-                ax2.legend(loc='best')
+                ax2.legend(loc='best', fontsize=9)
                 
-                pdf.savefig(fig2, bbox_inches='tight')
-                plt.close(fig2)
-                
-                # Page 3: Loss of Stiffness vs Cycles
-                fig3, ax3 = plt.subplots(figsize=(11, 8.5))
+                # Plot 3: Loss of Stiffness vs Cycles
                 ax3.plot(cycles, loss_of_stiffness, 'orange', linewidth=1.5, 
                         label='Loss of Stiffness [%]')
                 
@@ -120,23 +117,26 @@ class PlotExporter:
                                color='red', linestyle='--', linewidth=1,
                                label=f'Lower Limit: {threshold_monitor.config.stiffness_lower_limit:.1f} %')
                 
-                ax3.set_xlabel('Cycles', fontsize=12)
-                ax3.set_ylabel('Loss of Stiffness [%]', fontsize=12)
-                ax3.set_title('Loss of Stiffness vs Cycles', fontsize=14, fontweight='bold')
+                ax3.set_xlabel('Cycles', fontsize=11)
+                ax3.set_ylabel('Loss of Stiffness [%]', fontsize=11)
+                ax3.set_title('Loss of Stiffness vs Cycles', fontsize=12, fontweight='bold')
                 ax3.grid(True, alpha=0.3)
-                ax3.legend(loc='best')
+                ax3.legend(loc='best', fontsize=9)
                 
                 # Add violation info if available
                 if threshold_monitor and threshold_monitor.config.stiffness_enabled:
                     violation_text = f'Violations: {threshold_monitor.stiffness_violations}'
                     ax3.text(0.02, 0.98, violation_text, transform=ax3.transAxes,
-                            verticalalignment='top', bbox=dict(boxstyle='round', 
-                            facecolor='wheat', alpha=0.5))
+                            verticalalignment='top', fontsize=9,
+                            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
                 
-                pdf.savefig(fig3, bbox_inches='tight')
-                plt.close(fig3)
+                # Adjust layout to prevent overlap
+                plt.tight_layout(rect=[0, 0, 1, 0.99])
                 
-                # Page 4: Summary/Metadata (if requested)
+                pdf.savefig(fig, bbox_inches='tight')
+                plt.close(fig)
+                
+                # Page 2: Summary/Metadata (if requested)
                 if include_metadata:
                     fig4, ax4 = plt.subplots(figsize=(11, 8.5))
                     ax4.axis('off')
@@ -144,21 +144,32 @@ class PlotExporter:
                     # Build metadata text
                     metadata_lines = [
                         'Fatigue Test Summary Report',
-                        '=' * 50,
+                        '=' * 70,
                         '',
                         f'Export Date: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}',
                         f'Total Cycles: {len(cycles)}',
                         ''
                     ]
                     
+                    # Add log filename if provided
+                    if log_filename:
+                        metadata_lines.extend([
+                            'Data Log File:',
+                            '-' * 70,
+                            f'{log_filename}',
+                            ''
+                        ])
+                    
                     if statistics_tracker:
                         stats = statistics_tracker.get_summary()
                         metadata_lines.extend([
                             'Test Statistics:',
-                            '-' * 50,
+                            '-' * 70,
                             f'Data Points: {stats["data_points"]}',
                             f'Test Duration: {stats["connection_duration"]:.1f} seconds',
                             f'Data Rate: {stats["data_rate"]:.2f} points/second',
+                            f'Lines Parsed: {stats["lines_parsed"]}',
+                            f'Lines Skipped: {stats["lines_skipped"]} (headers/config)',
                             ''
                         ])
                     
@@ -166,36 +177,46 @@ class PlotExporter:
                         threshold_stats = threshold_monitor.get_statistics()
                         metadata_lines.extend([
                             'Threshold Monitoring:',
-                            '-' * 50,
+                            '-' * 70,
                         ])
                         
                         if threshold_stats['force_enabled']:
+                            force_pct = (threshold_stats["force_violations"] / len(cycles) * 100) if len(cycles) > 0 else 0
                             metadata_lines.extend([
                                 f'Upper Force Thresholds: ENABLED',
                                 f'  Upper Limit: {threshold_stats["force_upper_limit"]:.2f} N',
                                 f'  Lower Limit: {threshold_stats["force_lower_limit"]:.2f} N',
-                                f'  Violations: {threshold_stats["force_violations"]}',
+                                f'  Violations: {threshold_stats["force_violations"]} ({force_pct:.2f}%)',
                                 ''
                             ])
+                        else:
+                            metadata_lines.extend(['Upper Force Thresholds: DISABLED', ''])
                         
                         if threshold_stats['stiffness_enabled']:
+                            stiffness_pct = (threshold_stats["stiffness_violations"] / len(cycles) * 100) if len(cycles) > 0 else 0
                             metadata_lines.extend([
                                 f'Loss of Stiffness Thresholds: ENABLED',
                                 f'  Upper Limit: {threshold_stats["stiffness_upper_limit"]:.2f} %',
                                 f'  Lower Limit: {threshold_stats["stiffness_lower_limit"]:.2f} %',
-                                f'  Violations: {threshold_stats["stiffness_violations"]}',
+                                f'  Violations: {threshold_stats["stiffness_violations"]} ({stiffness_pct:.2f}%)',
                                 ''
                             ])
+                        else:
+                            metadata_lines.extend(['Loss of Stiffness Thresholds: DISABLED', ''])
                     
                     # Data range summary
                     metadata_lines.extend([
                         'Data Ranges:',
-                        '-' * 50,
+                        '-' * 70,
                         f'Force Lower: [{min(force_lower):.2f}, {max(force_lower):.2f}] N',
                         f'Force Upper: [{min(force_upper):.2f}, {max(force_upper):.2f}] N',
                         f'Travel at Upper: [{min(travel_at_upper):.4f}, {max(travel_at_upper):.4f}] mm',
+                        f'Travel 1: [{min(travel_1):.4f}, {max(travel_1):.4f}] mm',
+                        f'Travel 2: [{min(travel_2):.4f}, {max(travel_2):.4f}] mm',
                         f'Loss of Stiffness: [{min(loss_of_stiffness):.2f}, {max(loss_of_stiffness):.2f}] %',
-                        ''
+                        '',
+                        '',
+                        'Generated by: Fatigue Tester Data Acquisition System v2.2'
                     ])
                     
                     metadata_text = '\n'.join(metadata_lines)
@@ -213,11 +234,15 @@ class PlotExporter:
                 d['Keywords'] = 'Fatigue Testing, Data Acquisition'
                 d['Creator'] = 'Fatigue Tester Data Acquisition System'
                 d['Producer'] = 'Matplotlib PDF Backend'
+                if log_filename:
+                    d['Comments'] = f'Data from: {log_filename}'
             
             return True
             
         except Exception as e:
             print(f"Error exporting to PDF: {e}")
+            import traceback
+            traceback.print_exc()
             return False
     
     def export_to_png(self, filepath_prefix: str) -> bool:
