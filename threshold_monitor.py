@@ -14,12 +14,12 @@ class ThresholdConfiguration:
     """Configuration for threshold monitoring"""
     # Upper Force thresholds
     upper_force_enabled: bool = False
-    upper_force_upper_limit: float = 1000.0
-    upper_force_lower_limit: float = -1000.0
+    upper_force_upper_limit: float = 250.0
+    upper_force_lower_limit: float = -1.0
     
     # Loss of Stiffness thresholds
     stiffness_enabled: bool = False
-    stiffness_upper_limit: float = 100.0
+    stiffness_upper_limit: float = 50.0
     stiffness_lower_limit: float = 0.0
 
 
