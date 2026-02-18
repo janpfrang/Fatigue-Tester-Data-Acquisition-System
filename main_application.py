@@ -3,7 +3,7 @@ Main Application - Fatigue Tester Data Acquisition System
 Orchestrates all components with PyQt5 GUI
 
 Version 2.3 (Phase 2 Refactored + PDF Export) - February 16, 2026
-- Phase 1: UI components extracted (1522 → 667 lines, -56%)
+- Phase 1: UI components extracted (1522 â†’ 667 lines, -56%)
 - Phase 2: Business logic extracted + PDF export feature
 - Final size: 683 lines (55% reduction from original V2.2!)
 - New: Professional PDF reports with all plots and metadata
@@ -46,6 +46,7 @@ class DataProcessorWorker(QThread):
     data_processed = pyqtSignal(object)  # Emits FatigueTestData
     status_update = pyqtSignal(str)
     error_occurred = pyqtSignal(str)
+    cnf_decoded = pyqtSignal(object)     # Emits CNFConfig
     
     def __init__(self, data_queue: queue.Queue, parser: DataParser, stats_tracker: StatisticsTracker):
         super().__init__()
@@ -53,6 +54,7 @@ class DataProcessorWorker(QThread):
         self.parser = parser
         self.stats_tracker = stats_tracker  # NEW: Use StatisticsTracker
         self.running = False
+        self._header_buf = []  # Accumulate header lines for CNF parsing
     
     def should_parse_line(self, line: str) -> bool:
         """Determine if a line should be parsed"""
@@ -72,17 +74,45 @@ class DataProcessorWorker(QThread):
         return line.startswith('DTA;') or line.startswith('END;')
         
     def run(self):
-        """Process data from queue with intelligent line filtering"""
+        """Process data from queue with CNF header parsing"""
         self.running = True
         self.status_update.emit("Data processor started")
         
         lines_skipped = 0
         lines_parsed = 0
+        cnf_emitted = False
         
         while self.running:
             try:
                 raw_data = self.data_queue.get(timeout=0.1)
+                line = raw_data.strip()
                 
+                # ── CNF Header Region (before first DTA line) ──
+                if not cnf_emitted:
+                    self._header_buf.append(line)
+                    
+                    if line.startswith('CNF;'):
+                        cfg = DataParser.parse_header_block(self._header_buf)
+                        if cfg.parse_ok:
+                            self.cnf_decoded.emit(cfg)
+                            self.status_update.emit(
+                                f"CNF decoded — Kraft @2: {cfg.kraft2_N:.1f} N, "
+                                f"Kraft @1: {cfg.kraft1_N:.1f} N, "
+                                f"Betätigungen: {cfg.betaetigungen:,}"
+                            )
+                        else:
+                            self.error_occurred.emit("CNF line received but could not be decoded")
+                        cnf_emitted = True
+                        lines_skipped += 1
+                        self.stats_tracker.update_parse_stats(lines_parsed, lines_skipped)
+                        continue
+                    
+                    # Other header lines
+                    lines_skipped += 1
+                    self.stats_tracker.update_parse_stats(lines_parsed, lines_skipped)
+                    continue
+                
+                # ── Data Region (DTA/END) ──
                 if not self.should_parse_line(raw_data):
                     lines_skipped += 1
                     self.stats_tracker.update_parse_stats(lines_parsed, lines_skipped)
@@ -182,6 +212,9 @@ class MainWindow(QMainWindow):
         
         # Connection state
         self.is_connected = False
+        
+        # CNF configuration (populated when device sends header)
+        self.cnf_config = None
         
         # Setup menu bar
         self.setup_menu_bar()
@@ -364,6 +397,7 @@ class MainWindow(QMainWindow):
             self.processor_worker.data_processed.connect(self.on_data_received)
             self.processor_worker.status_update.connect(self.log_status)
             self.processor_worker.error_occurred.connect(self.log_error)
+            self.processor_worker.cnf_decoded.connect(self.on_cnf_decoded)
             self.processor_worker.start()
             
             # Create serial reader or mock reader
@@ -465,6 +499,20 @@ class MainWindow(QMainWindow):
         if data.has_error():
             error_desc = self.parser.get_error_description(data.error_code)
             self.log_error(f"Cycle {data.cycles}: {error_desc}")
+    
+    def on_cnf_decoded(self, config):
+        """Handle CNF configuration received from device"""
+        from data_parser import CNFConfig
+        if isinstance(config, CNFConfig) and config.parse_ok:
+            self.cnf_config = config
+            self.log_status(
+                f"Machine config received: Kraft @2 = {config.kraft2_N:.1f} N, "
+                f"Kraft @1 = {config.kraft1_N:.1f} N, "
+                f"Betätigungen = {config.betaetigungen:,}, "
+                f"NRW = {config.nrw_k2_mm:.2f} mm"
+            )
+        else:
+            self.log_error("CNF line received but could not be decoded")
     
     def on_watchdog_timeout(self, elapsed):
         """Handle watchdog timeout"""
@@ -629,11 +677,11 @@ class MainWindow(QMainWindow):
 <h2>Fatigue Tester Data Acquisition System v2.3 - Help</h2>
 
 <div style="background-color: #e8f4f8; padding: 10px; margin: 10px 0; border-left: 4px solid #0066cc;">
-<strong>🎉 New in V2.3 (Feb 16, 2026):</strong>
+<strong>New in V2.3 (Feb 16, 2026):</strong>
 <ul>
-<li>📄 <strong>PDF Export</strong> - Generate professional reports with all plots and metadata</li>
-<li>🏗️ <strong>Modular Architecture</strong> - Improved code quality (56% reduction)</li>
-<li>📊 <strong>Enhanced Metadata</strong> - Complete test traceability in PDFs</li>
+<li><strong>PDF Export</strong> - Generate professional reports with all plots and metadata</li>
+<li><strong>Modular Architecture</strong> - Improved code quality (56% reduction)</li>
+<li><strong>Enhanced Metadata</strong> - Complete test traceability in PDFs</li>
 </ul>
 </div>
 
@@ -681,7 +729,7 @@ class MainWindow(QMainWindow):
 <li><b>Plot 3 - Loss of Stiffness vs Cycles:</b>
    <ul>
    <li>Orange line: Loss of Stiffness [%]</li>
-   <li>Calculated as: (Travel_2 / Travel_at_Upper) × 100</li>
+   <li>Calculated as: (Travel_2 / Travel_at_Upper) Ã— 100</li>
    </ul>
 </li>
 </ul>
@@ -819,7 +867,7 @@ class MainWindow(QMainWindow):
 </ol>
 
 <h3>Loss of Stiffness Calculation</h3>
-<p><code>Loss of Stiffness [%] = (Travel_2 / Travel_at_Upper) × 100</code></p>
+<p><code>Loss of Stiffness [%] = (Travel_2 / Travel_at_Upper) Ã— 100</code></p>
 <ul>
 <li>Indicates material degradation during fatigue test</li>
 <li>Increasing trend shows cumulative fatigue damage</li>
@@ -839,27 +887,27 @@ class MainWindow(QMainWindow):
 
 <h3>Features in v2.3</h3>
 <ul>
-<li>✓ <strong>PDF Export</strong> - Professional reports with all plots and metadata</li>
-<li>✓ <strong>Modular Architecture</strong> - Improved maintainability (56% code reduction)</li>
-<li>✓ Complete header/configuration logging</li>
-<li>✓ Test traceability with device ID preservation</li>
-<li>✓ Threshold monitoring with violation detection</li>
-<li>✓ COM port auto-detection</li>
-<li>✓ Intelligent line filtering (no parse errors)</li>
-<li>✓ Three synchronized real-time plots</li>
-<li>✓ Unlimited data points</li>
-<li>✓ Negative value support</li>
-<li>✓ Watchdog connection monitoring</li>
-<li>✓ Mock data mode for testing</li>
-<li>✓ Professional CSV format</li>
-<li>✓ Comprehensive Help and User Manual</li>
+<li><strong>PDF Export</strong> - Professional reports with all plots and metadata</li>
+<li><strong>Modular Architecture</strong> - Improved maintainability (56% code reduction)</li>
+<li>Complete header/configuration logging</li>
+<li>Test traceability with device ID preservation</li>
+<li>Threshold monitoring with violation detection</li>
+<li>COM port auto-detection</li>
+<li>Intelligent line filtering (no parse errors)</li>
+<li>Three synchronized real-time plots</li>
+<li>Unlimited data points</li>
+<li>Negative value support</li>
+<li>Watchdog connection monitoring</li>
+<li>Mock data mode for testing</li>
+<li>Professional CSV format</li>
+<li>Comprehensive Help and User Manual</li>
 </ul>
 
 <h3>PDF Export (New!)</h3>
 <p><strong>How to Generate PDF Reports:</strong></p>
 <ol>
-<li>Menu: <strong>Advanced Options → Advanced Settings</strong></li>
-<li>Click <strong>"📄 Export Plots to PDF"</strong></li>
+<li>Menu: <strong>Advanced Options â†’ Advanced Settings</strong></li>
+<li>Click <strong>"Export Plots to PDF"</strong></li>
 <li>Choose filename and location</li>
 <li>PDF generated in &lt; 5 seconds!</li>
 </ol>
@@ -950,7 +998,7 @@ real-time visualization, comprehensive data logging, test traceability, and
 <strong>professional PDF report generation</strong>.</p>
 
 <div style="background-color: #e8f4f8; padding: 10px; margin: 10px 0; border-left: 4px solid #0066cc;">
-<strong>🎉 New in Version 2.3:</strong>
+<strong>New in Version 2.3:</strong>
 <ul>
 <li><strong>PDF Export</strong> - Generate professional multi-page reports</li>
 <li><strong>Modular Architecture</strong> - 56% code reduction, improved maintainability</li>
@@ -960,8 +1008,8 @@ real-time visualization, comprehensive data logging, test traceability, and
 
 <h3>Version 2.3 Features:</h3>
 <ul>
-<li><strong>📄 PDF Export</strong> - All plots + comprehensive metadata in professional reports</li>
-<li><strong>🏗️ Modular Design</strong> - Reusable UI components and business logic modules</li>
+<li><strong>ðŸ“„ PDF Export</strong> - All plots + comprehensive metadata in professional reports</li>
+<li><strong>ðŸ—ï¸ Modular Design</strong> - Reusable UI components and business logic modules</li>
 <li>Complete header and configuration logging for test traceability</li>
 <li>Device ID and setup parameters preserved in every CSV file</li>
 <li>Threshold monitoring for Upper Force and Loss of Stiffness</li>
@@ -1036,7 +1084,7 @@ with thread-safe communication and hardware abstraction.</p>
 </tr>
 <tr>
     <td><b>Status</b></td>
-    <td>✓ Stable and Ready</td>
+    <td>âœ“ Stable and Ready</td>
 </tr>
 </table>
 
@@ -1079,33 +1127,33 @@ with thread-safe communication and hardware abstraction.</p>
 <tr>
     <td><b>2.2 Refactored</b></td>
     <td>Feb 12, 2026</td>
-    <td>Phase 1 refactoring: UI components extracted, 56% code reduction (1522 → 667 lines)</td>
+    <td>Phase 1 refactoring: UI components extracted, 56% code reduction (1522 â†’ 667 lines)</td>
 </tr>
 <tr style="background-color: #e8f4f8;">
     <td><b>2.3 Phase 2</b></td>
     <td>Feb 16, 2026</td>
-    <td><strong>Phase 2 refactoring: Business logic modules + PDF Export feature (667 → 683 lines final)</strong></td>
+    <td><strong>Phase 2 refactoring: Business logic modules + PDF Export feature (667 â†’ 683 lines final)</strong></td>
 </tr>
 </table>
 
 <h3>Key Features in v2.3:</h3>
 <ul>
-<li>✓ <strong>PDF Export</strong> - Professional reports with all plots and metadata</li>
-<li>✓ <strong>Modular Architecture</strong> - Business logic modules (ThresholdMonitor, StatisticsTracker, PlotExporter)</li>
-<li>✓ <strong>Enhanced Metadata</strong> - Log filename and complete statistics in PDFs</li>
-<li>✓ Header/configuration logging (device ID, setup parameters)</li>
-<li>✓ Complete test traceability with metadata in CSV</li>
-<li>✓ Threshold monitoring (Upper Force and Loss of Stiffness)</li>
-<li>✓ Real-time violation detection with visual markers</li>
-<li>✓ COM port auto-detection with selection dialog</li>
-<li>✓ Intelligent line filtering (no header errors)</li>
-<li>✓ Professional CSV format with comments</li>
-<li>✓ Three synchronized real-time plots</li>
-<li>✓ Unlimited data points (no cutoff)</li>
-<li>✓ Negative value support for forces/positions</li>
-<li>✓ Watchdog connection monitoring</li>
-<li>✓ Mock data mode for testing</li>
-<li>✓ Modular UI architecture (Phase 1 refactoring)</li>
+<li><strong>PDF Export</strong> - Professional reports with all plots and metadata</li>
+<li><strong>Modular Architecture</strong> - Business logic modules (ThresholdMonitor, StatisticsTracker, PlotExporter)</li>
+<li><strong>Enhanced Metadata</strong> - Log filename and complete statistics in PDFs</li>
+<li>Header/configuration logging (device ID, setup parameters)</li>
+<li>Complete test traceability with metadata in CSV</li>
+<li>Threshold monitoring (Upper Force and Loss of Stiffness)</li>
+<li>Real-time violation detection with visual markers</li>
+<li>COM port auto-detection with selection dialog</li>
+<li>Intelligent line filtering (no header errors)</li>
+<li>Professional CSV format with comments</li>
+<li>Three synchronized real-time plots</li>
+<li>Unlimited data points (no cutoff)</li>
+<li>Negative value support for forces/positions</li>
+<li>Watchdog connection monitoring</li>
+<li>Mock data mode for testing</li>
+<li>Modular UI architecture (Phase 1 refactoring)</li>
 </ul>
 
 <h3>System Requirements:</h3>
@@ -1137,7 +1185,7 @@ with thread-safe communication and hardware abstraction.</p>
 <li>Watchdog Timeout: 5 seconds</li>
 </ul>
 
-<p style="margin-top: 20px; color: #27ae60;"><b>Status:</b> ✓ Ready for Production</p>
+<p style="margin-top: 20px; color: #27ae60;"><b>Status:</b> âœ“ Ready for Production</p>
 """
         
         msg = QMessageBox(self)
@@ -1157,10 +1205,13 @@ with thread-safe communication and hardware abstraction.</p>
         dialog.setGeometry(200, 200, 500, 400)
         dialog.setAttribute(Qt.WA_DeleteOnClose)
         
+        # Remove the "?" help button from dialog title bar
+        dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        
         layout = QVBoxLayout()
         
         # === Button: Save Plotted Data as PDF (NOW WORKING!) ===
-        save_pdf_btn = QPushButton("📄 Export Plots to PDF")
+        save_pdf_btn = QPushButton("Export Plots to PDF")
         save_pdf_btn.setMinimumHeight(50)
         save_pdf_btn.setStyleSheet(
             "QPushButton { background-color: #2196F3; color: white; "
@@ -1176,15 +1227,87 @@ with thread-safe communication and hardware abstraction.</p>
         separator.setAlignment(Qt.AlignCenter)
         layout.addWidget(separator)
         
+        # === Machine Configuration Section ===
+        machine_config_label = QLabel("Machine Configuration (CNF Header)")
+        machine_config_label.setStyleSheet("font-weight: bold; font-size: 11pt;")
+        layout.addWidget(machine_config_label)
+        
+        # Display CNF configuration if available
+        if self.cnf_config and self.cnf_config.parse_ok:
+            from PyQt5.QtWidgets import QGridLayout, QFrame
+            
+            config_frame = QFrame()
+            config_frame.setStyleSheet(
+                "QFrame { background-color: #f8f9fa; "
+                "border: 1px solid #dee2e6; border-radius: 4px; }"
+            )
+            config_grid = QGridLayout(config_frame)
+            config_grid.setHorizontalSpacing(15)
+            config_grid.setVerticalSpacing(4)
+            
+            row = 0
+            cfg = self.cnf_config
+            
+            # Helper to add rows
+            def add_config_row(label, value, unit=""):
+                nonlocal row
+                lbl = QLabel(f"<b>{label}:</b>")
+                val = QLabel(value)
+                val.setStyleSheet("background: #e8f5e9; padding: 2px 6px; border-radius: 2px;")
+                unt = QLabel(unit)
+                config_grid.addWidget(lbl, row, 0, Qt.AlignRight)
+                config_grid.addWidget(val, row, 1, Qt.AlignRight)
+                config_grid.addWidget(unt, row, 2)
+                row += 1
+            
+            # Force targets
+            add_config_row("Kraft @2 (upper)", f"{cfg.kraft2_N:.1f}", "N")
+            add_config_row("Kraft @1 (lower)", f"{cfg.kraft1_N:.1f}", f"N  (= @2 ÷ {cfg.kraft1_ratio})")
+            add_config_row("Kraftabschaltung", f"{cfg.kraftabschaltung_N:.1f}", "N  (emergency)")
+            add_config_row("Toleranz @2", f"± {cfg.toleranz_pct}", "%")
+            
+            lo, hi = cfg.force_tolerance_window()
+            add_config_row("Force window", f"{lo:.1f} – {hi:.1f}", "N")
+            
+            # Nachregelweg
+            add_config_row("Nachregelweg K1", f"{cfg.nrw_k1_mm:.2f}", "mm")
+            add_config_row("Nachregelweg K2", f"{cfg.nrw_k2_mm:.2f}", "mm")
+            
+            # Cycle control
+            add_config_row("Betätigungen", f"{cfg.betaetigungen:,}", "#  (planned cycles)")
+            add_config_row("Messen alle N", f"{cfg.messen_alle_n}", "#  (log interval)")
+            
+            # Device info
+            if cfg.device_version or cfg.device_id:
+                add_config_row("Device", cfg.device_version, f"ID: {cfg.device_id}")
+            
+            layout.addWidget(config_frame)
+        else:
+            no_config_label = QLabel(
+                "No configuration available.\n"
+                "Connect to the device to receive the CNF header."
+            )
+            no_config_label.setStyleSheet(
+                "color: #888; font-style: italic; padding: 10px; "
+                "background-color: #f5f5f5; border: 1px dashed #ccc; border-radius: 4px;"
+            )
+            no_config_label.setAlignment(Qt.AlignCenter)
+            layout.addWidget(no_config_label)
+        
+        # === Separator ===
+        separator2 = QLabel("-" * 60)
+        separator2.setAlignment(Qt.AlignCenter)
+        layout.addWidget(separator2)
+        
         # === Force Analysis Section ===
         force_analysis_label = QLabel("Force Analysis")
         force_analysis_label.setStyleSheet("font-weight: bold; font-size: 11pt;")
         layout.addWidget(force_analysis_label)
         
-        # Calculation: percentage of values exceeding (upper limit × 1.03)
+        # Calculation: percentage of values exceeding (upper limit Ã— 1.03)
         calculation_layout = QVBoxLayout()
         
-        calc_title = QLabel("Percentage of values exceeding (Upper Force Limit × 1.03):")
+        calc_title = QLabel("Percentage of values exceeding (Upper Force Limit Ã— 1.03):")
         calc_title.setStyleSheet("font-weight: bold;")
         calculation_layout.addWidget(calc_title)
         
@@ -1276,8 +1399,8 @@ with thread-safe communication and hardware abstraction.</p>
                         "PDF Export Successful",
                         f"Plots exported successfully to:\n{filename}\n\n"
                         f"The PDF contains:\n"
-                        f"• Page 1: All Three Plots (Forces, Travel, Loss of Stiffness)\n"
-                        f"• Page 2: Test Summary and Metadata\n\n"
+                        f"â€¢ Page 1: All Three Plots (Forces, Travel, Loss of Stiffness)\n"
+                        f"â€¢ Page 2: Test Summary and Metadata\n\n"
                         f"Includes:\n"
                         f"- Log filename: {self.logger.current_filename}\n"
                         f"- All travel measurements\n"
