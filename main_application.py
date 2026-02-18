@@ -6,7 +6,7 @@ Version 2.3 (Phase 2 Refactored + PDF Export) - February 16, 2026
 - Phase 1: UI components extracted (1522 → 667 lines, -56%)
 - Phase 2: Business logic extracted + PDF export feature
 - Final size: 683 lines (55% reduction from original V2.2!)
-- New: Professional PDF reports with all plots and metadata
+- New: Professional PDF reports with all needed plots and metadata
 """
 
 import sys
