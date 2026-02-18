@@ -1,20 +1,14 @@
 """
-UI Components Package
-Reusable PyQt5 UI components for Fatigue Tester application
+Tests package for Fatigue Tester Data Acquisition System
+
+This file should be mostly empty or only contain test utilities.
+UI components should be imported directly in test files, not here.
 """
 
-from .connection_panel import ConnectionPanel
-from .logging_panel import LoggingPanel
-from .plot_settings_panel import PlotSettingsPanel
-from .statistics_panel import StatisticsPanel
-from .status_log_panel import StatusLogPanel
-from .cnf_config_panel import MachineConfigPanel
+# DO NOT import UI components here
+# Import them in your test files like this:
+#   from connection_panel import ConnectionPanel
+#   from logging_panel import LoggingPanel
+# etc.
 
-__all__ = [
-    'ConnectionPanel',
-    'LoggingPanel',
-    'PlotSettingsPanel',
-    'StatisticsPanel',
-    'StatusLogPanel',
-    'MachineConfigPanel',
-]
+# If you need shared test fixtures, define them in conftest.py instead
