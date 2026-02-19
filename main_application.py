@@ -3,7 +3,7 @@ Main Application - Fatigue Tester Data Acquisition System
 Orchestrates all components with PyQt5 GUI
 
 Version 2.3 (Phase 2 Refactored + PDF Export) - February 16, 2026
-- Phase 1: UI components extracted (1522 â†’ 667 lines, -56%)
+- Phase 1: UI components extracted (1522 -> 667 lines, -56%)
 - Phase 2: Business logic extracted + PDF export feature
 - Final size: 683 lines (55% reduction from original V2.2!)
 - New: Professional PDF reports with all needed plots and metadata
@@ -87,7 +87,7 @@ class DataProcessorWorker(QThread):
                 raw_data = self.data_queue.get(timeout=0.1)
                 line = raw_data.strip()
                 
-                # ── CNF Header Region (before first DTA line) ──
+                # -- CNF Header Region (before first DTA line) --
                 if not cnf_emitted:
                     self._header_buf.append(line)
                     
@@ -96,9 +96,9 @@ class DataProcessorWorker(QThread):
                         if cfg.parse_ok:
                             self.cnf_decoded.emit(cfg)
                             self.status_update.emit(
-                                f"CNF decoded — Kraft @2: {cfg.kraft2_N:.1f} N, "
+                                f"CNF decoded - Kraft @2: {cfg.kraft2_N:.1f} N, "
                                 f"Kraft @1: {cfg.kraft1_N:.1f} N, "
-                                f"Betätigungen: {cfg.betaetigungen:,}"
+                                f"Betaetigungen: {cfg.betaetigungen:,}"
                             )
                         else:
                             self.error_occurred.emit("CNF line received but could not be decoded")
@@ -112,7 +112,7 @@ class DataProcessorWorker(QThread):
                     self.stats_tracker.update_parse_stats(lines_parsed, lines_skipped)
                     continue
                 
-                # ── Data Region (DTA/END) ──
+                # -- Data Region (DTA/END) --
                 if not self.should_parse_line(raw_data):
                     lines_skipped += 1
                     self.stats_tracker.update_parse_stats(lines_parsed, lines_skipped)
@@ -508,7 +508,7 @@ class MainWindow(QMainWindow):
             self.log_status(
                 f"Machine config received: Kraft @2 = {config.kraft2_N:.1f} N, "
                 f"Kraft @1 = {config.kraft1_N:.1f} N, "
-                f"Betätigungen = {config.betaetigungen:,}, "
+                f"Betaetigungen = {config.betaetigungen:,}, "
                 f"NRW = {config.nrw_k2_mm:.2f} mm"
             )
         else:
@@ -679,7 +679,7 @@ class MainWindow(QMainWindow):
 <div style="background-color: #e8f4f8; padding: 10px; margin: 10px 0; border-left: 4px solid #0066cc;">
 <strong>New in V2.3 (Feb 16, 2026):</strong>
 <ul>
-<li><strong>PDF Export</strong> - Generate professional reports with all plots and metadata</li>
+<li><strong>[New] PDF Export</strong> - Generate professional reports with all plots and metadata</li>
 <li><strong>Modular Architecture</strong> - Improved code quality (56% reduction)</li>
 <li><strong>Enhanced Metadata</strong> - Complete test traceability in PDFs</li>
 </ul>
@@ -729,7 +729,7 @@ class MainWindow(QMainWindow):
 <li><b>Plot 3 - Loss of Stiffness vs Cycles:</b>
    <ul>
    <li>Orange line: Loss of Stiffness [%]</li>
-   <li>Calculated as: (Travel_2 / Travel_at_Upper) Ã— 100</li>
+   <li>Calculated as: (Travel_2 / Travel_at_Upper) x 100</li>
    </ul>
 </li>
 </ul>
@@ -867,7 +867,7 @@ class MainWindow(QMainWindow):
 </ol>
 
 <h3>Loss of Stiffness Calculation</h3>
-<p><code>Loss of Stiffness [%] = (Travel_2 / Travel_at_Upper) Ã— 100</code></p>
+<p><code>Loss of Stiffness [%] = (Travel_2 / Travel_at_Upper) x 100</code></p>
 <ul>
 <li>Indicates material degradation during fatigue test</li>
 <li>Increasing trend shows cumulative fatigue damage</li>
@@ -906,7 +906,7 @@ class MainWindow(QMainWindow):
 <h3>PDF Export (New!)</h3>
 <p><strong>How to Generate PDF Reports:</strong></p>
 <ol>
-<li>Menu: <strong>Advanced Options â†’ Advanced Settings</strong></li>
+<li>Menu: <strong>Advanced Options -> Advanced Settings</strong></li>
 <li>Click <strong>"Export Plots to PDF"</strong></li>
 <li>Choose filename and location</li>
 <li>PDF generated in &lt; 5 seconds!</li>
@@ -920,16 +920,40 @@ class MainWindow(QMainWindow):
 <li>Data ranges for all parameters</li>
 </ul>
 
+<h3>Machine Configuration (CNF Header)</h3>
+<p>The Advanced Options dialog also shows the <strong>Machine Configuration</strong>,
+decoded from the CNF header line sent by the fatigue tester at connection start.</p>
+<p><strong>Displayed parameters:</strong></p>
+<ul>
+<li><strong>Kraft @2 / @1:</strong> Upper and lower force targets [N]</li>
+<li><strong>Kraftabschaltung:</strong> Emergency force cutoff [N]</li>
+<li><strong>Toleranz @2:</strong> Force tolerance band [%] and calculated force window [N]</li>
+<li><strong>Nachregelweg K1/K2:</strong> Position-correction budgets [mm]</li>
+<li><strong>Betaetigungen:</strong> Planned total test cycles</li>
+<li><strong>Messen alle N:</strong> Logging interval (every N cycles)</li>
+<li><strong>Device:</strong> Firmware version and device ID</li>
+</ul>
+<p>If not connected, the section shows "No configuration available".</p>
+
 <h3>For More Information</h3>
 <p>See "Serial Data Logger and Plotter - User Manual" in Help menu for complete documentation.</p>
 """
             
-            msg = QMessageBox(self)
-            msg.setWindowTitle("Help - Fatigue Tester v2.3")
-            msg.setTextFormat(Qt.RichText)
-            msg.setText(help_text)
-            msg.setStandardButtons(QMessageBox.Ok)
-            msg.exec_()
+            from PyQt5.QtWidgets import QDialog, QVBoxLayout, QTextBrowser, QPushButton
+            dialog = QDialog(self)
+            dialog.setWindowTitle("Help - Fatigue Tester v2.3")
+            dialog.setMinimumSize(700, 500)
+            dialog.resize(800, 600)
+            layout = QVBoxLayout()
+            browser = QTextBrowser()
+            browser.setHtml(help_text)
+            browser.setOpenExternalLinks(True)
+            layout.addWidget(browser)
+            close_btn = QPushButton("Close")
+            close_btn.clicked.connect(dialog.accept)
+            layout.addWidget(close_btn)
+            dialog.setLayout(layout)
+            dialog.exec_()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error showing help: {e}")
             print(f"Help dialog error: {e}")
@@ -1008,8 +1032,8 @@ real-time visualization, comprehensive data logging, test traceability, and
 
 <h3>Version 2.3 Features:</h3>
 <ul>
-<li><strong>ðŸ“„ PDF Export</strong> - All plots + comprehensive metadata in professional reports</li>
-<li><strong>ðŸ—ï¸ Modular Design</strong> - Reusable UI components and business logic modules</li>
+<li><strong>[New] PDF Export</strong> - All plots + comprehensive metadata in professional reports</li>
+<li><strong>[New] Modular Design</strong> - Reusable UI components and business logic modules</li>
 <li>Complete header and configuration logging for test traceability</li>
 <li>Device ID and setup parameters preserved in every CSV file</li>
 <li>Threshold monitoring for Upper Force and Loss of Stiffness</li>
@@ -1053,12 +1077,21 @@ with thread-safe communication and hardware abstraction.</p>
 <p style="margin-top: 20px;"><i>For detailed documentation, see USER_MANUAL_V23.html</i></p>
 """
         
-        msg = QMessageBox(self)
-        msg.setWindowTitle("About - Fatigue Tester v2.3")
-        msg.setTextFormat(Qt.RichText)
-        msg.setText(about_text)
-        msg.setStandardButtons(QMessageBox.Ok)
-        msg.exec_()
+        from PyQt5.QtWidgets import QDialog, QVBoxLayout, QTextBrowser, QPushButton
+        dialog = QDialog(self)
+        dialog.setWindowTitle("About - Fatigue Tester v2.3")
+        dialog.setMinimumSize(600, 400)
+        dialog.resize(700, 550)
+        layout = QVBoxLayout()
+        browser = QTextBrowser()
+        browser.setHtml(about_text)
+        browser.setOpenExternalLinks(True)
+        layout.addWidget(browser)
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(dialog.accept)
+        layout.addWidget(close_btn)
+        dialog.setLayout(layout)
+        dialog.exec_()
     
     def show_version(self):
         """Show version information for v2.3"""
@@ -1084,7 +1117,7 @@ with thread-safe communication and hardware abstraction.</p>
 </tr>
 <tr>
     <td><b>Status</b></td>
-    <td>âœ“ Stable and Ready</td>
+    <td>[OK] Stable and Ready</td>
 </tr>
 </table>
 
@@ -1127,12 +1160,12 @@ with thread-safe communication and hardware abstraction.</p>
 <tr>
     <td><b>2.2 Refactored</b></td>
     <td>Feb 12, 2026</td>
-    <td>Phase 1 refactoring: UI components extracted, 56% code reduction (1522 â†’ 667 lines)</td>
+    <td>Phase 1 refactoring: UI components extracted, 56% code reduction (1522 -> 667 lines)</td>
 </tr>
 <tr style="background-color: #e8f4f8;">
     <td><b>2.3 Phase 2</b></td>
     <td>Feb 16, 2026</td>
-    <td><strong>Phase 2 refactoring: Business logic modules + PDF Export feature (667 â†’ 683 lines final)</strong></td>
+    <td><strong>Phase 2 refactoring: Business logic modules + PDF Export feature (667 -> 683 lines final)</strong></td>
 </tr>
 </table>
 
@@ -1185,30 +1218,48 @@ with thread-safe communication and hardware abstraction.</p>
 <li>Watchdog Timeout: 5 seconds</li>
 </ul>
 
-<p style="margin-top: 20px; color: #27ae60;"><b>Status:</b> âœ“ Ready for Production</p>
+<p style="margin-top: 20px; color: #27ae60;"><b>Status:</b> [OK] Ready for Production</p>
 """
         
-        msg = QMessageBox(self)
-        msg.setWindowTitle("Version Information - v2.3")
-        msg.setTextFormat(Qt.RichText)
-        msg.setText(version_text)
-        msg.setStandardButtons(QMessageBox.Ok)
-        msg.exec_()
+        from PyQt5.QtWidgets import QDialog, QVBoxLayout, QTextBrowser, QPushButton
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Version Information - v2.3")
+        dialog.setMinimumSize(650, 450)
+        dialog.resize(750, 600)
+        layout = QVBoxLayout()
+        browser = QTextBrowser()
+        browser.setHtml(version_text)
+        browser.setOpenExternalLinks(True)
+        layout.addWidget(browser)
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(dialog.accept)
+        layout.addWidget(close_btn)
+        dialog.setLayout(layout)
+        dialog.exec_()
     
     def show_advanced_options(self):
         """Show Advanced Options dialog - Phase 2: With working PDF export!"""
-        from PyQt5.QtWidgets import QDialog, QVBoxLayout, QPushButton, QLabel
+        from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QPushButton, QLabel,
+                                     QScrollArea, QWidget)
         
         # Create dialog
         dialog = QDialog(self)
         dialog.setWindowTitle("Advanced Options")
-        dialog.setGeometry(200, 200, 500, 400)
+        dialog.setMinimumSize(500, 400)
+        dialog.resize(520, 500)
         dialog.setAttribute(Qt.WA_DeleteOnClose)
         
         # Remove the "?" help button from dialog title bar
         dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         
-        layout = QVBoxLayout()
+        # Outer layout for dialog (scroll area + close button)
+        outer_layout = QVBoxLayout()
+        
+        # Scroll area for content
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll_widget = QWidget()
+        layout = QVBoxLayout(scroll_widget)
         
         # === Button: Save Plotted Data as PDF (NOW WORKING!) ===
         save_pdf_btn = QPushButton("Export Plots to PDF")
@@ -1262,19 +1313,19 @@ with thread-safe communication and hardware abstraction.</p>
             
             # Force targets
             add_config_row("Kraft @2 (upper)", f"{cfg.kraft2_N:.1f}", "N")
-            add_config_row("Kraft @1 (lower)", f"{cfg.kraft1_N:.1f}", f"N  (= @2 ÷ {cfg.kraft1_ratio})")
+            add_config_row("Kraft @1 (lower)", f"{cfg.kraft1_N:.1f}", f"N  (= @2 / {cfg.kraft1_ratio})")
             add_config_row("Kraftabschaltung", f"{cfg.kraftabschaltung_N:.1f}", "N  (emergency)")
-            add_config_row("Toleranz @2", f"± {cfg.toleranz_pct}", "%")
+            add_config_row("Toleranz @2", f"+/- {cfg.toleranz_pct}", "%")
             
             lo, hi = cfg.force_tolerance_window()
-            add_config_row("Force window", f"{lo:.1f} – {hi:.1f}", "N")
+            add_config_row("Force window", f"{lo:.1f}  -  {hi:.1f}", "N")
             
             # Nachregelweg
             add_config_row("Nachregelweg K1", f"{cfg.nrw_k1_mm:.2f}", "mm")
             add_config_row("Nachregelweg K2", f"{cfg.nrw_k2_mm:.2f}", "mm")
             
             # Cycle control
-            add_config_row("Betätigungen", f"{cfg.betaetigungen:,}", "#  (planned cycles)")
+            add_config_row("Betaetigungen", f"{cfg.betaetigungen:,}", "#  (planned cycles)")
             add_config_row("Messen alle N", f"{cfg.messen_alle_n}", "#  (log interval)")
             
             # Device info
@@ -1304,10 +1355,10 @@ with thread-safe communication and hardware abstraction.</p>
         force_analysis_label.setStyleSheet("font-weight: bold; font-size: 11pt;")
         layout.addWidget(force_analysis_label)
         
-        # Calculation: percentage of values exceeding (upper limit Ã— 1.03)
+        # Calculation: percentage of values exceeding (upper limit x 1.03)
         calculation_layout = QVBoxLayout()
         
-        calc_title = QLabel("Percentage of values exceeding (Upper Force Limit Ã— 1.03):")
+        calc_title = QLabel("Percentage of values exceeding (Upper Force Limit x 1.03):")
         calc_title.setStyleSheet("font-weight: bold;")
         calculation_layout.addWidget(calc_title)
         
@@ -1329,12 +1380,17 @@ with thread-safe communication and hardware abstraction.</p>
         layout.addLayout(calculation_layout)
         layout.addStretch()
         
-        # === Close Button ===
+        # Set scroll content
+        scroll_widget.setLayout(layout)
+        scroll.setWidget(scroll_widget)
+        outer_layout.addWidget(scroll)
+        
+        # === Close Button (outside scroll area) ===
         close_btn = QPushButton("Close")
         close_btn.clicked.connect(dialog.accept)
-        layout.addWidget(close_btn)
+        outer_layout.addWidget(close_btn)
         
-        dialog.setLayout(layout)
+        dialog.setLayout(outer_layout)
         
         # Timer to update calculations
         update_timer = QTimer()
@@ -1399,8 +1455,8 @@ with thread-safe communication and hardware abstraction.</p>
                         "PDF Export Successful",
                         f"Plots exported successfully to:\n{filename}\n\n"
                         f"The PDF contains:\n"
-                        f"â€¢ Page 1: All Three Plots (Forces, Travel, Loss of Stiffness)\n"
-                        f"â€¢ Page 2: Test Summary and Metadata\n\n"
+                        f"- Page 1: All Three Plots (Forces, Travel, Loss of Stiffness)\n"
+                        f"- Page 2: Test Summary and Metadata\n\n"
                         f"Includes:\n"
                         f"- Log filename: {self.logger.current_filename}\n"
                         f"- All travel measurements\n"
