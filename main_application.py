@@ -1192,7 +1192,7 @@ with thread-safe communication and hardware abstraction.</p>
 <h3>System Requirements:</h3>
 <ul>
 <li><b>Python:</b> 3.8 or higher</li>
-<li><b>Operating System:</b> Windows 7+, Ubuntu 18.04+, macOS 10.13+</li>
+<li><b>Operating System:</b> Windows 10+, Ubuntu 22.04+, macOS 11+</li>
 <li><b>RAM:</b> 4 GB minimum recommended</li>
 <li><b>Disk Space:</b> 100 MB</li>
 </ul>
