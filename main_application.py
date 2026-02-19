@@ -629,11 +629,11 @@ class MainWindow(QMainWindow):
 <h2>Fatigue Tester Data Acquisition System v2.3 - Help</h2>
 
 <div style="background-color: #e8f4f8; padding: 10px; margin: 10px 0; border-left: 4px solid #0066cc;">
-<strong>🎉 New in V2.3 (Feb 16, 2026):</strong>
+<strong> New in V2.3 (Feb 16, 2026):</strong>
 <ul>
-<li>📄 <strong>PDF Export</strong> - Generate professional reports with all plots and metadata</li>
-<li>🏗️ <strong>Modular Architecture</strong> - Improved code quality (56% reduction)</li>
-<li>📊 <strong>Enhanced Metadata</strong> - Complete test traceability in PDFs</li>
+<li> <strong>PDF Export</strong> - Generate professional reports with all plots and metadata</li>
+<li> <strong>Modular Architecture</strong> - Improved code quality (56% reduction)</li>
+<li> <strong>Enhanced Metadata</strong> - Complete test traceability in PDFs</li>
 </ul>
 </div>
 
@@ -950,7 +950,7 @@ real-time visualization, comprehensive data logging, test traceability, and
 <strong>professional PDF report generation</strong>.</p>
 
 <div style="background-color: #e8f4f8; padding: 10px; margin: 10px 0; border-left: 4px solid #0066cc;">
-<strong>🎉 New in Version 2.3:</strong>
+<strong> New in Version 2.3:</strong>
 <ul>
 <li><strong>PDF Export</strong> - Generate professional multi-page reports</li>
 <li><strong>Modular Architecture</strong> - 56% code reduction, improved maintainability</li>
@@ -960,8 +960,8 @@ real-time visualization, comprehensive data logging, test traceability, and
 
 <h3>Version 2.3 Features:</h3>
 <ul>
-<li><strong>📄 PDF Export</strong> - All plots + comprehensive metadata in professional reports</li>
-<li><strong>🏗️ Modular Design</strong> - Reusable UI components and business logic modules</li>
+<li><strong> PDF Export</strong> - All plots + comprehensive metadata in professional reports</li>
+<li><strong> Modular Design</strong> - Reusable UI components and business logic modules</li>
 <li>Complete header and configuration logging for test traceability</li>
 <li>Device ID and setup parameters preserved in every CSV file</li>
 <li>Threshold monitoring for Upper Force and Loss of Stiffness</li>
