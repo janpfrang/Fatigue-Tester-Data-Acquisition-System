@@ -40,7 +40,7 @@ jobs:
       run: |
         # Stop if there are syntax errors
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # Warn about style issues but don't fail
+        # Warn about style issues but don't fail (exit-zero)
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
     
     # Step 5: Run unit tests
@@ -55,10 +55,15 @@ jobs:
         flags: unittests
         fail_ci_if_error: false
         verbose: true
-```
 
----
-
+  # NEUER JOB: Dieser Job dient als einzelner Status-Check für die Branch Protection
+  check-all-tests-passed:
+    needs: test # Wichtig: Wartet auf den Abschluss aller 15 Matrix-Läufe
+    runs-on: ubuntu-latest
+    steps:
+      - name: All tests passed
+        run: echo "Alle Matrix-Tests waren erfolgreich. Freigabe erteilt."
+        
 ## **STEP 5: Your Directory Structure Should Now Look Like**
 ```
 fatigue-tester/
