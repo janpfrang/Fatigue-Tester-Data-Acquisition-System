@@ -1,62 +1,113 @@
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
+
     <title>User Manual - Serial Data Logger and Plotter v2.3</title>
+
     <style>
+
         body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; color: #333; }
+
         h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+
         h2 { color: #2980b9; margin-top: 30px; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
+
         h3 { color: #16a085; margin-top: 20px; }
+
         code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: 'Courier New', monospace; }
+
         pre { background-color: #f4f4f4; padding: 10px; border-left: 4px solid #3498db; overflow-x: auto; }
+
         table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+
         table, th, td { border: 1px solid #ddd; }
+
         th { background-color: #3498db; color: white; padding: 10px; text-align: left; }
+
         td { padding: 8px; }
+
         tr:nth-child(even) { background-color: #f9f9f9; }
+
         .warning { background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin: 15px 0; }
+
         .info { background-color: #d1ecf1; border-left: 4px solid #17a2b8; padding: 10px; margin: 15px 0; }
+
         .success { background-color: #d4edda; border-left: 4px solid #28a745; padding: 10px; margin: 15px 0; }
+
         .error { background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 10px; margin: 15px 0; }
+
         ul, ol { margin-left: 20px; }
+
         .feature-badge { display: inline-block; background-color: #28a745; color: white; padding: 3px 8px; border-radius: 3px; font-size: 0.85em; margin-left: 5px; }
+
         .new-v23 { background-color: #e8f4f8; border-left: 4px solid #0066cc; padding: 10px; margin: 10px 0; }
+
         .pdf-icon { font-size: 1.2em; color: #dc3545; }
+
     </style>
+
 </head>
+
 <body>
 
 <h1>Serial Data Logger and Plotter - User Manual</h1>
+
 <p><strong>Version 2.3 (Phase 2 Refactored)</strong> | February 16, 2026</p>
+
 <p><strong>Contact:</strong> Uwe Hasenstab and Alexander Waal</p>
 
 <div class="new-v23">
-<strong>🎉 What's New in Version 2.3:</strong>
+
+<strong>What's New in Version 2.3:</strong>
+
 <ul>
-    <li><span class="pdf-icon">📄</span> <strong>PDF Export Feature</strong> - Generate professional reports with all plots and metadata</li>
-    <li>🏗️ <strong>Modular Architecture</strong> - Improved code organization (56% code reduction)</li>
-    <li>📊 <strong>Enhanced Metadata</strong> - PDF reports include log filename and complete test statistics</li>
-    <li>🎯 <strong>All-in-One Layout</strong> - All three plots on a single page in PDF</li>
+
+    <li><span class="pdf-icon"></span> <strong>PDF Export Feature</strong> - Generate professional reports with all plots and metadata</li>
+
+    <li> <strong>Modular Architecture</strong> - Improved code organization (56% code reduction)</li>
+
+    <li> <strong>Enhanced Metadata</strong> - PDF reports include log filename and complete test statistics</li>
+
+    <li> <strong>All-in-One Layout</strong> - All three plots on a single page in PDF</li>
+
 </ul>
+
 </div>
 
 <hr>
 
 <h2>Table of Contents</h2>
+
 <ol>
+
     <li><a href="#introduction">Introduction</a></li>
+
     <li><a href="#getting-started">Getting Started</a></li>
+
     <li><a href="#interface">Main Interface</a></li>
+
     <li><a href="#connection">Connection & Port Detection</a></li>
+
     <li><a href="#logging">Data Logging</a></li>
+
     <li><a href="#plotting">Live Plotting</a></li>
+
     <li><a href="#thresholds">Threshold Monitoring</a></li>
+
     <li><a href="#pdf-export">PDF Report Generation</a> <span class="feature-badge">NEW v2.3</span></li>
+
     <li><a href="#troubleshooting">Troubleshooting</a></li>
+
     <li><a href="#faq">FAQ</a></li>
+
     <li><a href="#advanced">Advanced Features</a></li>
+
     <li><a href="#technical">Technical Information</a></li>
+
 </ol>
 
 <hr>
@@ -64,30 +115,51 @@
 <h2 id="introduction">1. Introduction</h2>
 
 <h3>1.1 What is This Software?</h3>
+
 <p>The Serial Data Logger and Plotter is a professional-grade data acquisition system for fatigue testing equipment. It acquires real-time data via serial communication, logs it to disk, displays it on three synchronized plots, and <strong>generates professional PDF reports</strong>.</p>
 
 <p><strong>Version 2.3 adds:</strong></p>
+
 <ul>
-    <li><span class="feature-badge">NEW</span> <span class="pdf-icon">📄</span> PDF Export - Professional reports with all plots and metadata</li>
+
+    <li><span class="feature-badge">NEW</span> <span class="pdf-icon"></span> PDF Export - Professional reports with all plots and metadata</li>
+
     <li><span class="feature-badge">NEW</span> Modular Architecture - Improved maintainability and code quality</li>
+
     <li><span class="feature-badge">NEW</span> Enhanced Metadata - Log filename and complete statistics in reports</li>
-    <li>✓ All V2.2 features preserved (threshold monitoring, port detection, header logging)</li>
+
+    <li>[OK] All V2.2 features preserved (threshold monitoring, port detection, header logging)</li>
+
 </ul>
 
 <h3>1.2 Key Features</h3>
+
 <ul>
+
     <li><strong>Real-time Data Acquisition:</strong> Receives data from equipment at 0.1 to 1.0 second intervals</li>
+
     <li><strong>Automatic CSV Logging:</strong> Data saved with timestamp-based filenames, headers preserved</li>
+
     <li><strong>Three Live Plots:</strong> Forces, Travel measurements, and Loss of Stiffness monitoring</li>
+
     <li><strong>PDF Report Generation:</strong> <span class="feature-badge">NEW v2.3</span> Export all plots with comprehensive metadata</li>
+
     <li><strong>Threshold Monitoring:</strong> Set limits for Upper Force and Loss of Stiffness</li>
+
     <li><strong>COM Port Detection:</strong> Automatically finds available ports</li>
+
     <li><strong>Loss of Stiffness Calculation:</strong> Automatic calculation and visualization</li>
+
     <li><strong>Watchdog Timer:</strong> Alerts if no data received for 5 seconds</li>
+
     <li><strong>Mock Data Mode:</strong> Test without hardware</li>
+
     <li><strong>Unlimited Data Points:</strong> No artificial limits on test duration</li>
+
     <li><strong>Complete Test Traceability:</strong> Device ID and configuration preserved in every log</li>
+
     <li><strong>Modular Design:</strong> <span class="feature-badge">NEW v2.3</span> Professional architecture for easy maintenance</li>
+
 </ul>
 
 <hr>
@@ -97,81 +169,145 @@
 <h3>2.1 System Requirements</h3>
 
 <table>
+
     <tr>
+
         <th>Component</th>
+
         <th>Requirement</th>
+
     </tr>
+
     <tr>
+
         <td><strong>Operating System</strong></td>
-        <td>Windows 7+, Ubuntu 18.04+, macOS 10.13+</td>
+
+        <td>Windows 10+, Ubuntu 22.04+, macOS 11+</td>
+
     </tr>
+
     <tr>
+
         <td><strong>Python</strong></td>
+
         <td>3.8 or higher</td>
+
     </tr>
+
     <tr>
+
         <td><strong>RAM</strong></td>
+
         <td>4 GB minimum, 8 GB recommended</td>
+
     </tr>
+
     <tr>
+
         <td><strong>Storage</strong></td>
+
         <td>100 MB for application + space for data logs</td>
+
     </tr>
+
     <tr>
+
         <td><strong>Serial Port</strong></td>
+
         <td>USB-Serial adapter or native RS-232 port</td>
+
     </tr>
+
 </table>
 
 <h3>2.2 Installation</h3>
 
 <div class="info">
-<strong>📦 Installation Steps:</strong>
+
+<strong> Installation Steps:</strong>
+
 <ol>
+
     <li><strong>Install Python 3.8+</strong> if not already installed</li>
+
     <li><strong>Install Dependencies:</strong>
+
         <pre>pip install -r requirements.txt</pre>
+
         Required packages:
+
         <ul>
+
             <li>pyserial >= 3.5</li>
+
             <li>PyQt5 >= 5.15.0</li>
+
             <li>pyqtgraph >= 0.13.0</li>
+
             <li>pandas >= 1.5.0</li>
+
             <li>numpy >= 1.23.0</li>
+
             <li><strong>matplotlib >= 3.5.0</strong> <span class="feature-badge">NEW v2.3</span> (for PDF export)</li>
+
         </ul>
+
     </li>
+
     <li><strong>Launch Application:</strong>
+
         <pre>python main_application.py</pre>
+
     </li>
+
 </ol>
+
 </div>
 
 <h3>2.3 Quick Start (5 Minutes)</h3>
 
 <div class="success">
-<strong>✓ Quick Start Guide:</strong>
+
+<strong>[OK] Quick Start Guide:</strong>
+
 <ol>
+
     <li><strong>Connect Equipment:</strong> Plug fatigue tester into COM port</li>
+
     <li><strong>Launch Application:</strong> <code>python main_application.py</code></li>
-    <li><strong>Detect Port:</strong> Click "🔋 Detect Ports" button</li>
+
+    <li><strong>Detect Port:</strong> Click " Detect Ports" button</li>
+
     <li><strong>Select Port:</strong> Choose port from dialog, double-click to select</li>
+
     <li><strong>Verify Baudrate:</strong> Should be 115200 (default)</li>
+
     <li><strong>Click Connect:</strong> Button turns red, plots start updating</li>
+
     <li><strong>Watch Data Flow:</strong> Three plots show real-time test data</li>
+
     <li><strong>Data Saved:</strong> Automatically logging to <code>logs/</code> directory</li>
-    <li><strong>Export PDF:</strong> <span class="feature-badge">NEW</span> Advanced Options → Export Plots to PDF</li>
+
+    <li><strong>Export PDF:</strong> <span class="feature-badge">NEW</span> Advanced Options -&gt; Export Plots to PDF</li>
+
 </ol>
+
 </div>
 
 <h3>2.4 Testing Without Hardware (Mock Mode)</h3>
 
 <p>To test the software without connecting real equipment:</p>
+
 <ol>
+
     <li>Check <strong>"Use Mock Data (Testing)"</strong> checkbox</li>
+
     <li>Click <strong>"Connect"</strong></li>
+
     <li>System generates realistic test data automatically</li>
+
     <li>All features work identically (plotting, logging, thresholds, <strong>PDF export</strong>)</li>
+
 </ol>
 
 <hr>
@@ -183,70 +319,131 @@
 <p>The main window is divided into organized panels:</p>
 
 <table>
+
     <tr>
+
         <th>Panel</th>
+
         <th>Location</th>
+
         <th>Purpose</th>
+
     </tr>
+
     <tr>
+
         <td><strong>Connection Panel</strong></td>
+
         <td>Top Left</td>
+
         <td>Port selection, baudrate, Connect/Disconnect buttons</td>
+
     </tr>
+
     <tr>
+
         <td><strong>Logging Panel</strong></td>
+
         <td>Middle Left</td>
+
         <td>Current log filename, Save/New log buttons</td>
+
     </tr>
+
     <tr>
+
         <td><strong>Plot Settings Panel</strong></td>
+
         <td>Lower Left</td>
+
         <td>Update interval, auto-range, threshold controls</td>
+
     </tr>
+
     <tr>
+
         <td><strong>Statistics Panel</strong></td>
+
         <td>Bottom Left</td>
+
         <td>Real-time statistics (connection time, data points, violations)</td>
+
     </tr>
+
     <tr>
+
         <td><strong>Status Log Panel</strong></td>
+
         <td>Very Bottom Left</td>
+
         <td>Timestamped status messages and errors</td>
+
     </tr>
+
     <tr>
+
         <td><strong>Plot Area</strong></td>
+
         <td>Right Side (75%)</td>
+
         <td>Three synchronized real-time plots</td>
+
     </tr>
+
 </table>
 
 <h3>3.2 Menu Bar</h3>
 
 <table>
+
     <tr>
+
         <th>Menu</th>
+
         <th>Options</th>
+
         <th>Description</th>
+
     </tr>
+
     <tr>
+
         <td><strong>Help</strong></td>
+
         <td>
+
             - User Manual<br>
+
             - Help Documentation<br>
+
             - About
+
         </td>
+
         <td>Documentation and software information</td>
+
     </tr>
+
     <tr>
+
         <td><strong>Version</strong></td>
+
         <td>Version Information</td>
+
         <td>Detailed version history and module information</td>
+
     </tr>
+
     <tr>
+
         <td><strong>Advanced Options</strong></td>
+
         <td>Advanced Settings</td>
-        <td><span class="pdf-icon">📄</span> PDF Export & Force Analysis <span class="feature-badge">NEW v2.3</span></td>
+
+        <td>PDF Export, Machine Configuration &amp; Force Analysis <span class="feature-badge">NEW v2.3</span></td>
+
     </tr>
+
 </table>
 
 <hr>
@@ -258,9 +455,13 @@
 <p>V2.2+ automatically detects available COM ports on startup:</p>
 
 <ol>
+
     <li><strong>Auto-Detection:</strong> On launch, system scans for available ports</li>
+
     <li><strong>Dropdown Population:</strong> Detected ports appear in COM port dropdown</li>
-    <li><strong>Manual Scan:</strong> Click "🔋 Detect Ports" to rescan at any time</li>
+
+    <li><strong>Manual Scan:</strong> Click " Detect Ports" to rescan at any time</li>
+
 </ol>
 
 <h3>4.2 Port Selection Dialog</h3>
@@ -268,25 +469,41 @@
 <p>The port selection dialog provides an easy way to choose the correct port:</p>
 
 <div class="info">
+
 <strong>Using Port Selection Dialog:</strong>
+
 <ol>
-    <li>Click <strong>"🔋 Detect Ports"</strong> button</li>
+
+    <li>Click <strong>" Detect Ports"</strong> button</li>
+
     <li>Dialog shows all available ports with descriptions</li>
-    <li>Green ✓ indicates port is available and can be opened</li>
+
+    <li>Green [OK] indicates port is available and can be opened</li>
+
     <li><strong>Double-click</strong> a port to select and auto-close</li>
+
     <li>Or click <strong>"Select"</strong> button to confirm</li>
+
     <li>Click <strong>"Refresh"</strong> to re-scan ports</li>
+
 </ol>
+
 </div>
 
 <h3>4.3 Connection Process</h3>
 
 <ol>
+
     <li><strong>Select Port:</strong> Choose COM port from dropdown</li>
+
     <li><strong>Set Baudrate:</strong> Usually 115200 (default)</li>
+
     <li><strong>Optional:</strong> Enable "Use Mock Data" for testing</li>
+
     <li><strong>Click Connect:</strong> Button changes to red "Disconnect"</li>
+
     <li><strong>Watch Status:</strong> Status log shows connection success</li>
+
 </ol>
 
 <hr>
@@ -298,30 +515,55 @@
 <p>Data logging happens automatically when connected:</p>
 
 <table>
+
     <tr>
+
         <th>Feature</th>
+
         <th>Description</th>
+
     </tr>
+
     <tr>
+
         <td><strong>File Location</strong></td>
+
         <td><code>logs/</code> subdirectory (created automatically)</td>
+
     </tr>
+
     <tr>
+
         <td><strong>File Naming</strong></td>
+
         <td><code>fatigue_test_YYYYMMDD_HHMMSS.csv</code></td>
+
     </tr>
+
     <tr>
+
         <td><strong>Header Preservation</strong></td>
+
         <td>Device ID, model, configuration logged as comments</td>
+
     </tr>
+
     <tr>
+
         <td><strong>No Overwrites</strong></td>
+
         <td>Timestamp ensures unique filenames</td>
+
     </tr>
+
     <tr>
+
         <td><strong>Format</strong></td>
+
         <td>Standard CSV compatible with Excel, MATLAB, Python pandas</td>
+
     </tr>
+
 </table>
 
 <h3>5.2 CSV File Structure</h3>
@@ -329,30 +571,47 @@
 <p>Each CSV file contains three sections:</p>
 
 <pre>
+
 # === Header Section (Comments) ===
+
 # ### Device ID: FT-1234
+
 # ### Model: Fatigue Tester Pro
+
 # For display: Upper Force = 1000 N
+
 # CNF;param1;param2;...
 
 # === Column Headers ===
+
 Timestamp,Status,Cycles,Position_1_mm,Force_Lower_N,...
 
 # === Data Rows ===
+
 2026-02-12 14:30:00,DTA,1,182,263,0,793,2238,0,611,0
+
 2026-02-12 14:30:01,DTA,2,183,264,0,794,2239,0,612,0
+
 ...
+
 </pre>
 
 <h3>5.3 Manual Log Management</h3>
 
 <div class="info">
+
 <strong>Log Management Options:</strong>
+
 <ul>
+
     <li><strong>Current Filename:</strong> Displayed in Logging Panel</li>
+
     <li><strong>Save Log As:</strong> Save current log with custom name (original continues)</li>
+
     <li><strong>Start New Log:</strong> Close current log and start fresh file</li>
+
 </ul>
+
 </div>
 
 <hr>
@@ -364,55 +623,95 @@ Timestamp,Status,Cycles,Position_1_mm,Force_Lower_N,...
 <p>The system displays three real-time plots, synchronized by cycle number:</p>
 
 <h4>Plot 1: Forces vs Cycles</h4>
+
 <ul>
+
     <li><strong style="color: blue;">Blue Line:</strong> Lower Force [N]</li>
+
     <li><strong style="color: red;">Red Line:</strong> Upper Force [N]</li>
+
     <li><strong style="color: orange;">Orange Dashed Lines:</strong> Threshold limits (if enabled)</li>
+
     <li><strong style="color: red;">Red Markers:</strong> Threshold violations</li>
+
 </ul>
 
 <h4>Plot 2: Travel Measurements vs Cycles</h4>
+
 <ul>
+
     <li><strong style="color: green;">Green Line:</strong> Travel at Upper Force [mm]</li>
+
     <li><strong style="color: cyan;">Cyan Line:</strong> Travel 1 [mm]</li>
+
     <li><strong style="color: magenta;">Magenta Line:</strong> Travel 2 [mm]</li>
+
 </ul>
 
 <h4>Plot 3: Loss of Stiffness vs Cycles</h4>
+
 <ul>
+
     <li><strong style="color: orange;">Orange Line:</strong> Loss of Stiffness [%]</li>
-    <li><strong>Formula:</strong> <code>(Travel_2 / Travel_at_Upper) × 100</code></li>
+
+    <li><strong>Formula:</strong> <code>(Travel_2 / Travel_at_Upper) x 100</code></li>
+
     <li><strong style="color: red;">Red Dashed Lines:</strong> Threshold limits (if enabled)</li>
+
     <li><strong style="color: orange;">Orange Markers:</strong> Threshold violations</li>
+
 </ul>
 
 <h3>6.2 Plot Controls</h3>
 
 <table>
+
     <tr>
+
         <th>Control</th>
+
         <th>Function</th>
+
         <th>Default</th>
+
     </tr>
+
     <tr>
+
         <td><strong>Update Interval</strong></td>
+
         <td>How often plots refresh (100-5000 ms)</td>
+
         <td>1000 ms (1 second)</td>
+
     </tr>
+
     <tr>
+
         <td><strong>Auto Range</strong></td>
+
         <td>Automatically adjust axes to show all data</td>
+
         <td>Enabled</td>
+
     </tr>
+
     <tr>
+
         <td><strong>Clear Plots</strong></td>
+
         <td>Remove all displayed data (does not affect CSV log)</td>
+
         <td>-</td>
+
     </tr>
+
 </table>
 
 <div class="warning">
-<strong>⚠️ Note:</strong> Clearing plots removes visual data but does NOT delete logged CSV data. Your data remains safe in the log files.
+
+<strong> Note:</strong> Clearing plots removes visual data but does NOT delete logged CSV data. Your data remains safe in the log files.
+
 </div>
 
 <hr>
@@ -426,40 +725,67 @@ Timestamp,Status,Cycles,Position_1_mm,Force_Lower_N,...
 <h3>7.2 Upper Force Thresholds</h3>
 
 <div class="info">
+
 <strong>Setting Upper Force Thresholds:</strong>
+
 <ol>
+
     <li>Check <strong>"Enable Upper Force Thresholds"</strong></li>
+
     <li>Set <strong>Upper Limit</strong> (maximum acceptable force in N)</li>
+
     <li>Set <strong>Lower Limit</strong> (minimum acceptable force in N)</li>
+
     <li>System monitors all incoming Upper Force values</li>
+
     <li>Out-of-range values marked in red on plot</li>
+
     <li>Violation count displayed in Statistics Panel</li>
+
 </ol>
+
 </div>
 
 <h3>7.3 Loss of Stiffness Thresholds</h3>
 
 <div class="info">
+
 <strong>Setting Loss of Stiffness Thresholds:</strong>
+
 <ol>
+
     <li>Check <strong>"Enable Loss of Stiffness Thresholds"</strong></li>
+
     <li>Set <strong>Upper Limit</strong> (maximum acceptable % in %)</li>
+
     <li>Set <strong>Lower Limit</strong> (minimum acceptable % in %)</li>
+
     <li>System monitors calculated Loss of Stiffness values</li>
+
     <li>Out-of-range values marked in orange on plot</li>
+
     <li>Violation count displayed in Statistics Panel</li>
+
 </ol>
+
 </div>
 
 <h3>7.4 Threshold Visualization</h3>
 
 <p>When thresholds are enabled:</p>
+
 <ul>
+
     <li><strong>Threshold Lines:</strong> Displayed as dashed lines on plots</li>
+
     <li><strong>Violation Markers:</strong> Colored dots highlight out-of-range points</li>
+
     <li><strong>Violation Counter:</strong> Shows total violations in top-left corner of plots</li>
+
     <li><strong>Statistics:</strong> Real-time violation counts in Statistics Panel</li>
+
     <li><strong>PDF Export:</strong> <span class="feature-badge">NEW</span> Violations included in PDF reports</li>
+
 </ul>
 
 <hr>
@@ -469,138 +795,235 @@ Timestamp,Status,Cycles,Position_1_mm,Force_Lower_N,...
 <h3>8.1 Overview</h3>
 
 <div class="new-v23">
-<p><span class="pdf-icon">📄</span> <strong>Version 2.3 introduces professional PDF report generation!</strong></p>
+
+<p><span class="pdf-icon"></span> <strong>Version 2.3 introduces professional PDF report generation!</strong></p>
+
 <p>Export all your test data as a comprehensive, publication-ready PDF report with:</p>
+
 <ul>
+
     <li>All three plots on a single page for easy comparison</li>
+
     <li>Threshold lines and violation markers included</li>
+
     <li>Complete test metadata and statistics</li>
+
     <li>Log filename for traceability</li>
+
     <li>High-resolution plots suitable for printing</li>
+
 </ul>
+
 </div>
 
 <h3>8.2 How to Generate PDF Reports</h3>
 
 <div class="success">
-<strong>✓ Step-by-Step PDF Export:</strong>
+
+<strong>[OK] Step-by-Step PDF Export:</strong>
+
 <ol>
+
     <li><strong>Connect and Collect Data:</strong> Ensure you have test data (mock mode works too!)</li>
-    <li><strong>Open Advanced Options:</strong> Menu Bar → <strong>Advanced Options</strong> → <strong>Advanced Settings</strong></li>
-    <li><strong>Click PDF Export Button:</strong> Large blue button "<span class="pdf-icon">📄</span> Export Plots to PDF"</li>
+
+    <li><strong>Open Advanced Options:</strong> Menu Bar -&gt; <strong>Advanced Options</strong> -&gt; <strong>Advanced Settings</strong></li>
+
+    <li><strong>Review Machine Configuration:</strong> If connected, the dialog also shows the decoded CNF parameters (force targets, tolerances, planned cycles, etc.)</li>
+
+    <li><strong>Click PDF Export Button:</strong> Large blue button "Export Plots to PDF"</li>
+
     <li><strong>Choose Filename:</strong> File dialog opens with suggested name <code>fatigue_test_YYYYMMDD_HHMMSS.pdf</code></li>
+
     <li><strong>Wait for Generation:</strong> System generates PDF (typically < 5 seconds)</li>
+
     <li><strong>Success Message:</strong> Confirmation dialog shows PDF location and contents</li>
+
     <li><strong>Open PDF:</strong> Use any PDF viewer to see your professional report</li>
+
 </ol>
+
 </div>
 
 <h3>8.3 PDF Report Structure</h3>
 
 <h4>Page 1: All Three Plots</h4>
+
 <p>Single-page layout with all plots vertically stacked:</p>
 
 <table>
+
     <tr>
+
         <th>Section</th>
+
         <th>Content</th>
+
     </tr>
+
     <tr>
+
         <td><strong>Top (Forces)</strong></td>
+
         <td>
+
             - Lower Force (blue) and Upper Force (red) vs Cycles<br>
+
             - Threshold lines (orange dashed) if enabled<br>
+
             - Violation count annotation
+
         </td>
+
     </tr>
+
     <tr>
+
         <td><strong>Middle (Travel)</strong></td>
+
         <td>
+
             - Travel at Upper (green), Travel 1 (cyan), Travel 2 (magenta) vs Cycles<br>
+
             - All travel measurements for comprehensive analysis
+
         </td>
+
     </tr>
+
     <tr>
+
         <td><strong>Bottom (Stiffness)</strong></td>
+
         <td>
+
             - Loss of Stiffness (orange) vs Cycles<br>
+
             - Threshold lines (red dashed) if enabled<br>
+
             - Violation count annotation
+
         </td>
+
     </tr>
+
 </table>
 
 <h4>Page 2: Test Summary and Metadata</h4>
+
 <p>Comprehensive test information in monospace format:</p>
 
 <pre>
+
 Fatigue Test Summary Report
+
 ======================================================================
 
 Export Date: 2026-02-12 14:30:22
+
 Total Cycles: 1000
 
 Data Log File:
+
 ----------------------------------------------------------------------
+
 fatigue_test_20260212_143022.csv
 
 Test Statistics:
+
 ----------------------------------------------------------------------
+
 Data Points: 1000
+
 Test Duration: 125.3 seconds
+
 Data Rate: 7.98 points/second
+
 Lines Parsed: 1000
+
 Lines Skipped: 3 (headers/config)
 
 Threshold Monitoring:
+
 ----------------------------------------------------------------------
+
 Upper Force Thresholds: ENABLED
+
   Upper Limit: 1000.00 N
+
   Lower Limit: -1000.00 N
+
   Violations: 15 (1.50%)
 
 Loss of Stiffness Thresholds: ENABLED
+
   Upper Limit: 100.00 %
+
   Lower Limit: 0.00 %
+
   Violations: 8 (0.80%)
 
 Data Ranges:
+
 ----------------------------------------------------------------------
+
 Force Lower: [250.00, 270.00] N
+
 Force Upper: [990.00, 1010.00] N
+
 Travel 1: [10.20, 12.50] mm
+
 Travel 2: [8.10, 9.80] mm
+
 Travel at Upper: [15.30, 18.70] mm
+
 Loss of Stiffness: [40.50, 65.20] %
 
-
 Generated by: Fatigue Tester Data Acquisition System v2.3
+
 </pre>
 
 <h3>8.4 PDF Best Practices</h3>
 
 <div class="info">
-<strong>💡 Tips for Best Results:</strong>
+
+<strong> Tips for Best Results:</strong>
+
 <ul>
+
     <li><strong>Collect Sufficient Data:</strong> More data points create better-looking plots</li>
+
     <li><strong>Enable Thresholds:</strong> Thresholds and violations make reports more informative</li>
+
     <li><strong>Use Descriptive Filenames:</strong> Include test ID or sample name in filename</li>
+
     <li><strong>Generate During Test:</strong> You can export PDFs at any time during data collection</li>
+
     <li><strong>Multiple Exports:</strong> Export at different stages for comparison</li>
+
     <li><strong>Archive with CSV:</strong> Keep PDF and CSV together for complete documentation</li>
+
 </ul>
+
 </div>
 
 <h3>8.5 PDF Applications</h3>
 
 <p>Professional PDF reports are ideal for:</p>
+
 <ul>
-    <li>📊 <strong>Test Documentation:</strong> Attach to test reports and quality records</li>
-    <li>📝 <strong>Presentations:</strong> Include in technical presentations and meetings</li>
-    <li>🔬 <strong>Research Papers:</strong> Use high-quality plots in scientific publications</li>
-    <li>📧 <strong>Email Reports:</strong> Share results with colleagues and customers</li>
-    <li>📁 <strong>Archival:</strong> Long-term storage of test results in compact format</li>
-    <li>🖨️ <strong>Printing:</strong> High-resolution plots print clearly on paper</li>
+
+    <li> <strong>Test Documentation:</strong> Attach to test reports and quality records</li>
+
+    <li> <strong>Presentations:</strong> Include in technical presentations and meetings</li>
+
+    <li> <strong>Research Papers:</strong> Use high-quality plots in scientific publications</li>
+
+    <li> <strong>Email Reports:</strong> Share results with colleagues and customers</li>
+
+    <li> <strong>Archival:</strong> Long-term storage of test results in compact format</li>
+
+    <li> <strong>Printing:</strong> High-resolution plots print clearly on paper</li>
+
 </ul>
 
 <hr>
@@ -610,135 +1033,257 @@ Generated by: Fatigue Tester Data Acquisition System v2.3
 <h3>9.1 Connection Issues</h3>
 
 <table>
+
     <tr>
+
         <th>Problem</th>
+
         <th>Possible Cause</th>
+
         <th>Solution</th>
+
     </tr>
+
     <tr>
+
         <td><strong>No ports detected</strong></td>
+
         <td>USB cable not connected, driver issue</td>
+
         <td>
+
             1. Check cable connection<br>
+
             2. Install USB-Serial drivers<br>
+
             3. Try different USB port<br>
+
             4. Manually enter port name
+
         </td>
+
     </tr>
+
     <tr>
+
         <td><strong>Connection failed</strong></td>
+
         <td>Port in use, wrong baudrate</td>
+
         <td>
+
             1. Close other serial programs<br>
+
             2. Verify baudrate (usually 115200)<br>
+
             3. Try different port<br>
+
             4. Restart application
+
         </td>
+
     </tr>
+
     <tr>
+
         <td><strong>No data received</strong></td>
+
         <td>Equipment not transmitting, cable issue</td>
+
         <td>
+
             1. Check equipment is powered on<br>
+
             2. Verify equipment is transmitting<br>
+
             3. Try different cable<br>
+
             4. Check equipment settings
+
         </td>
+
     </tr>
+
     <tr>
+
         <td><strong>Watchdog timeout</strong></td>
+
         <td>Connection lost, test stopped</td>
+
         <td>
+
             1. Check cable connection<br>
+
             2. Verify equipment still running<br>
+
             3. Reconnect if needed
+
         </td>
+
     </tr>
+
 </table>
 
 <h3>9.2 Data and Plotting Issues</h3>
 
 <table>
+
     <tr>
+
         <th>Problem</th>
+
         <th>Possible Cause</th>
+
         <th>Solution</th>
+
     </tr>
+
     <tr>
+
         <td><strong>Plots not updating</strong></td>
+
         <td>Update interval too slow, plotter stopped</td>
+
         <td>
+
             1. Check "Update Interval" setting<br>
+
             2. Disconnect and reconnect<br>
+
             3. Restart application
+
         </td>
+
     </tr>
+
     <tr>
+
         <td><strong>Parse errors</strong></td>
+
         <td>Wrong baudrate, data corruption</td>
+
         <td>
+
             1. Try different baudrates<br>
+
             2. Check cable quality<br>
+
             3. Reduce noise/interference<br>
+
             4. Check equipment output format
+
         </td>
+
     </tr>
+
     <tr>
+
         <td><strong>CSV file missing data</strong></td>
+
         <td>Application closed improperly</td>
+
         <td>
+
             1. Always disconnect properly<br>
+
             2. Check logs/ directory<br>
+
             3. Data up to crash should be saved
+
         </td>
+
     </tr>
+
 </table>
 
 <h3>9.3 PDF Export Issues <span class="feature-badge">NEW v2.3</span></h3>
 
 <table>
+
     <tr>
+
         <th>Problem</th>
+
         <th>Possible Cause</th>
+
         <th>Solution</th>
+
     </tr>
+
     <tr>
+
         <td><strong>PDF export button disabled</strong></td>
+
         <td>No data collected yet</td>
+
         <td>
+
             1. Connect and collect some data<br>
+
             2. Try mock mode for testing<br>
+
             3. Wait for at least 1 data point
+
         </td>
+
     </tr>
+
     <tr>
+
         <td><strong>PDF generation failed</strong></td>
+
         <td>matplotlib error, file permissions</td>
+
         <td>
+
             1. Check you have write permissions<br>
+
             2. Verify matplotlib is installed: <code>pip install matplotlib</code><br>
+
             3. Check error message in status log<br>
+
             4. Try different save location
+
         </td>
+
     </tr>
+
     <tr>
+
         <td><strong>PDF empty or corrupted</strong></td>
+
         <td>Generation interrupted</td>
+
         <td>
+
             1. Wait for "success" message<br>
+
             2. Don't close app during export<br>
+
             3. Try exporting again
+
         </td>
+
     </tr>
+
     <tr>
+
         <td><strong>Plots cut off in PDF</strong></td>
+
         <td>Matplotlib layout issue</td>
+
         <td>
+
             1. This is rare - report as bug<br>
+
             2. Try exporting again<br>
+
             3. Plots should fit automatically
+
         </td>
+
     </tr>
+
 </table>
 
 <hr>
@@ -748,74 +1293,117 @@ Generated by: Fatigue Tester Data Acquisition System v2.3
 <h3>10.1 General Questions</h3>
 
 <div class="info">
+
 <strong>Q: What's the difference between V2.2 and V2.3?</strong><br>
+
 A: V2.3 adds PDF export functionality and improves code architecture. All V2.2 features are preserved. The main file is 56% smaller (better maintenance) and you can now generate professional PDF reports of your test data.
+
 </div>
 
 <div class="info">
+
 <strong>Q: Can I use this without hardware?</strong><br>
+
 A: Yes! Enable "Use Mock Data (Testing)" checkbox and click Connect. The system generates realistic test data automatically. Perfect for training or testing the PDF export feature.
+
 </div>
 
 <div class="info">
+
 <strong>Q: Where are my log files?</strong><br>
+
 A: In the <code>logs/</code> subdirectory next to main_application.py. Files are named <code>fatigue_test_YYYYMMDD_HHMMSS.csv</code>
+
 </div>
 
 <div class="info">
+
 <strong>Q: How do I open the CSV files?</strong><br>
+
 A: Excel, LibreOffice Calc, MATLAB, Python pandas, or any text editor. The format is standard CSV with comment headers (lines starting with #).
+
 </div>
 
 <h3>10.2 PDF Export Questions <span class="feature-badge">NEW v2.3</span></h3>
 
 <div class="info">
+
 <strong>Q: Do I need special software to view PDF reports?</strong><br>
+
 A: No, any PDF viewer works (Adobe Reader, browser, macOS Preview, etc.). PDFs are standard format.
+
 </div>
 
 <div class="info">
+
 <strong>Q: Can I export PDF during data collection?</strong><br>
+
 A: Yes! You can export at any time. The PDF captures the data collected up to that moment.
+
 </div>
 
 <div class="info">
+
 <strong>Q: Will PDF include my thresholds?</strong><br>
+
 A: Yes! If thresholds are enabled, they appear as dashed lines on plots with violation counts.
+
 </div>
 
 <div class="info">
+
 <strong>Q: How big are the PDF files?</strong><br>
+
 A: Typically 100-500 KB for 1000-10000 data points. Very efficient!
+
 </div>
 
 <div class="info">
+
 <strong>Q: Can I customize the PDF appearance?</strong><br>
+
 A: Not in the GUI currently. The layout is optimized for professional reports. Contact developers for custom requirements.
+
 </div>
 
 <h3>10.3 Threshold Questions</h3>
 
 <div class="info">
+
 <strong>Q: What happens when a threshold is violated?</strong><br>
+
 A: The violation is:
+
 <ul>
+
     <li>Marked with colored dot on plot</li>
+
     <li>Counted in statistics panel</li>
+
     <li>Logged in status log</li>
+
     <li>Included in PDF report</li>
+
 </ul>
+
 It's a visual/statistical indicator only - the test continues normally.
+
 </div>
 
 <div class="info">
+
 <strong>Q: Can I change thresholds during a test?</strong><br>
+
 A: Yes! Threshold changes apply immediately. Previous violations remain marked.
+
 </div>
 
 <div class="info">
+
 <strong>Q: Does clearing plots reset violation counts?</strong><br>
+
 A: Yes, clearing plots resets all violation counters.
+
 </div>
 
 <hr>
@@ -827,42 +1415,138 @@ A: Yes, clearing plots resets all violation counters.
 <p>In the Advanced Options dialog, you can access advanced force analysis:</p>
 
 <ul>
-    <li><strong>103% Threshold Analysis:</strong> Calculate % of values exceeding (Upper Limit × 1.03)</li>
+
+    <li><strong>103% Threshold Analysis:</strong> Calculate % of values exceeding (Upper Limit x 1.03)</li>
+
     <li><strong>Real-time Updates:</strong> Statistics update every 500ms</li>
+
     <li><strong>Detailed Breakdown:</strong> Shows both count and percentage</li>
+
 </ul>
 
-<h3>11.2 Command Line Options</h3>
+<h3>11.2 Machine Configuration (CNF Header) <span class="feature-badge">NEW v2.3</span></h3>
+
+<p>The Advanced Options dialog displays the <strong>Machine Configuration</strong> section, which shows
+all parameters decoded from the CNF header line sent by the fatigue testing device at the start
+of each connection. This provides full traceability of the test setup.</p>
+
+<div class="info">
+<strong>How it works:</strong>
+<ol>
+    <li>When you connect to the device, it sends a series of header lines followed by a CNF configuration line</li>
+    <li>The software automatically decodes the CNF binary data into human-readable parameters</li>
+    <li>Open <strong>Advanced Options -&gt; Advanced Settings</strong> to view the decoded configuration</li>
+</ol>
+</div>
+
+<p><strong>Displayed parameters:</strong></p>
+
+<table>
+    <tr>
+        <th>Parameter</th>
+        <th>Unit</th>
+        <th>Description</th>
+    </tr>
+    <tr>
+        <td><strong>Kraft @2 (upper)</strong></td>
+        <td>N</td>
+        <td>Upper force target for the fatigue test</td>
+    </tr>
+    <tr>
+        <td><strong>Kraft @1 (lower)</strong></td>
+        <td>N</td>
+        <td>Lower force target (derived from Kraft @2 / ratio)</td>
+    </tr>
+    <tr>
+        <td><strong>Kraftabschaltung</strong></td>
+        <td>N</td>
+        <td>Emergency force cutoff limit</td>
+    </tr>
+    <tr>
+        <td><strong>Toleranz @2</strong></td>
+        <td>%</td>
+        <td>Force tolerance band (+/- percentage around Kraft @2)</td>
+    </tr>
+    <tr>
+        <td><strong>Force window</strong></td>
+        <td>N</td>
+        <td>Calculated acceptable force range (Kraft @2 +/- tolerance)</td>
+    </tr>
+    <tr>
+        <td><strong>Nachregelweg K1</strong></td>
+        <td>mm</td>
+        <td>Position-correction budget for Kraft 1</td>
+    </tr>
+    <tr>
+        <td><strong>Nachregelweg K2</strong></td>
+        <td>mm</td>
+        <td>Position-correction budget for Kraft 2</td>
+    </tr>
+    <tr>
+        <td><strong>Betaetigungen</strong></td>
+        <td>#</td>
+        <td>Planned total number of test cycles</td>
+    </tr>
+    <tr>
+        <td><strong>Messen alle N</strong></td>
+        <td>#</td>
+        <td>Logging interval (log every N cycles)</td>
+    </tr>
+    <tr>
+        <td><strong>Device</strong></td>
+        <td>-</td>
+        <td>Firmware version and device ID (if available)</td>
+    </tr>
+</table>
+
+<div class="warning">
+<strong>Note:</strong> If no device is connected or the CNF header has not been received yet,
+the Machine Configuration section shows "No configuration available. Connect to the device to
+receive the CNF header."
+</div>
+
+<h3>11.3 Command Line Options</h3>
 
 <p>Start the application with optional parameters:</p>
 
 <pre>
+
 # Normal startup
+
 python main_application.py
 
 # With specific configuration (if implemented)
+
 python main_application.py --port COM3 --baudrate 115200
 
 # Mock mode from command line
+
 python main_application.py --mock
+
 </pre>
 
-<h3>11.3 Batch Processing Scripts</h3>
+<h3>11.4 Batch Processing Scripts</h3>
 
 <p>For processing multiple log files, you can write Python scripts:</p>
 
 <pre>
+
 import pandas as pd
 
 # Load CSV (ignoring comment lines)
+
 df = pd.read_csv('logs/fatigue_test_20260212_143022.csv', comment='#')
 
 # Calculate statistics
+
 max_force = df['Force_Upper_N'].max()
+
 avg_stiffness = df['Loss_of_Stiffness_Percent'].mean()
 
 print(f"Max Force: {max_force} N")
+
 print(f"Avg Stiffness: {avg_stiffness}%")
+
 </pre>
 
 <hr>
@@ -872,104 +1556,185 @@ print(f"Avg Stiffness: {avg_stiffness}%")
 <h3>12.1 Data Protocol</h3>
 
 <p><strong>Serial Protocol Format:</strong></p>
+
 <pre>
+
 DTA;[Cycles];[Pos1];[ForceLower];[Travel1];[Pos2];[ForceUpper];[Travel2];[TravelAtUpper];[Reserved];!
 
 Example:
+
 DTA;31422;182;263;0;793;2238;0;611;0;!
+
 </pre>
 
 <h3>12.2 Architecture Overview (V2.3)</h3>
 
 <p><strong>Modular Design:</strong></p>
+
 <ul>
+
     <li><strong>Main Application (683 lines):</strong> Coordination and integration</li>
+
     <li><strong>UI Components (5 modules):</strong> Reusable interface panels</li>
+
     <li><strong>Business Logic (3 modules):</strong>
+
         <ul>
+
             <li>ThresholdMonitor (210 lines) - Violation detection</li>
+
             <li>StatisticsTracker (158 lines) - Statistics tracking</li>
+
             <li>PlotExporter (282 lines) - PDF generation</li>
+
         </ul>
+
     </li>
+
     <li><strong>Core Processing:</strong> Parser, Logger, Plotter, Serial Reader (unchanged from V2.2)</li>
+
 </ul>
 
 <h3>12.3 Performance Characteristics</h3>
 
 <table>
+
     <tr>
+
         <th>Metric</th>
+
         <th>Value</th>
+
     </tr>
+
     <tr>
+
         <td><strong>Maximum Data Points</strong></td>
+
         <td>Unlimited (tested to 100,000+)</td>
+
     </tr>
+
     <tr>
+
         <td><strong>Plot Update Rate</strong></td>
+
         <td>Configurable: 100ms to 5000ms</td>
+
     </tr>
+
     <tr>
+
         <td><strong>Data Acquisition Rate</strong></td>
+
         <td>0.1 to 1.0 seconds (1-10 Hz)</td>
+
     </tr>
+
     <tr>
+
         <td><strong>CSV Write Latency</strong></td>
+
         <td>< 1ms (non-blocking buffered I/O)</td>
+
     </tr>
+
     <tr>
+
         <td><strong>PDF Generation Time</strong></td>
+
         <td>< 5 seconds for 10,000 points</td>
+
     </tr>
+
     <tr>
+
         <td><strong>Memory Usage</strong></td>
+
         <td>< 500 MB for typical sessions</td>
+
     </tr>
+
 </table>
 
 <h3>12.4 File Locations</h3>
 
 <table>
+
     <tr>
+
         <th>Content</th>
+
         <th>Location</th>
+
     </tr>
+
     <tr>
+
         <td><strong>Application</strong></td>
+
         <td><code>main_application.py</code></td>
+
     </tr>
+
     <tr>
+
         <td><strong>UI Components</strong></td>
+
         <td><code>ui_components/*.py</code></td>
+
     </tr>
+
     <tr>
+
         <td><strong>Business Logic</strong></td>
+
         <td><code>threshold_monitor.py, statistics_tracker.py, plot_exporter.py</code></td>
+
     </tr>
+
     <tr>
+
         <td><strong>CSV Logs</strong></td>
+
         <td><code>logs/fatigue_test_*.csv</code></td>
+
     </tr>
+
     <tr>
+
         <td><strong>PDF Reports</strong></td>
+
         <td>User-specified location (default: same as app)</td>
+
     </tr>
+
     <tr>
+
         <td><strong>Configuration</strong></td>
+
         <td><code>config.py</code></td>
+
     </tr>
+
 </table>
 
 <h3>12.5 Dependencies (V2.3)</h3>
 
 <pre>
+
 pyserial>=3.5         # Serial port communication
+
 PyQt5>=5.15.0         # GUI framework
+
 pyqtgraph>=0.13.0     # Real-time plotting
+
 pandas>=1.5.0         # Data management
+
 numpy>=1.23.0         # Numerical operations
+
 matplotlib>=3.5.0     # PDF generation (NEW in V2.3)
+
 </pre>
 
 <hr>
@@ -979,74 +1744,132 @@ matplotlib>=3.5.0     # PDF generation (NEW in V2.3)
 <h3>13.1 Keyboard Shortcuts</h3>
 
 <table>
+
     <tr>
+
         <th>Shortcut</th>
+
         <th>Action</th>
+
     </tr>
+
     <tr>
+
         <td><strong>Ctrl+Q</strong></td>
+
         <td>Quit application</td>
+
     </tr>
+
     <tr>
+
         <td><strong>F1</strong></td>
+
         <td>Open Help (if implemented)</td>
+
     </tr>
+
 </table>
 
 <h3>13.2 Version History</h3>
 
 <table>
+
     <tr>
+
         <th>Version</th>
+
         <th>Date</th>
+
         <th>Key Changes</th>
+
     </tr>
+
     <tr>
+
         <td><strong>1.0</strong></td>
+
         <td>Original</td>
+
         <td>Initial release</td>
+
     </tr>
+
     <tr>
+
         <td><strong>2.0</strong></td>
+
         <td>Feb 5, 2026</td>
+
         <td>Three plots, unlimited points, negative values</td>
+
     </tr>
+
     <tr>
+
         <td><strong>2.1</strong></td>
+
         <td>Feb 12, 2026</td>
+
         <td>Line filtering (no parse errors)</td>
+
     </tr>
+
     <tr>
+
         <td><strong>2.2</strong></td>
+
         <td>Feb 12, 2026</td>
+
         <td>Header logging, port detection, thresholds</td>
+
     </tr>
+
     <tr style="background-color: #e8f4f8;">
+
         <td><strong>2.3</strong></td>
+
         <td>Feb 16, 2026</td>
+
         <td><strong>PDF export, modular architecture</strong></td>
+
     </tr>
+
 </table>
 
 <h3>13.3 Support and Contact</h3>
 
 <div class="info">
+
 <p><strong>Need Help?</strong></p>
+
 <ul>
+
     <li><strong>GitHub Repository:</strong> [Link to repository]</li>
+
     <li><strong>Email:</strong> Contact Uwe Hasenstab and Alexander Waal</li>
+
     <li><strong>Documentation:</strong> See README.md and SRS documents</li>
+
     <li><strong>Bug Reports:</strong> Use GitHub Issues</li>
+
 </ul>
+
 </div>
 
 <hr>
 
 <p style="text-align: center; margin-top: 40px; color: #666;">
+
 <strong>Serial Data Logger and Plotter - User Manual v2.3</strong><br>
+
 February 16, 2026<br>
-© Uwe Hasenstab and Alexander Waal
+
+(c) Uwe Hasenstab and Alexander Waal
+
 </p>
 
 </body>
+
 </html>
+

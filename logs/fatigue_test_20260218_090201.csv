@@ -1,0 +1,6 @@
+Timestamp,Status,Cycles,Position_1_mm,Force_Lower_N,Travel_1_mm,Position_2_mm,Force_Upper_N,Travel_2_mm,Travel_at_Upper_mm,Loss_of_Stiffness_Percent,Error_Code,Error_Description,Raw_Data
+2026-02-18 09:02:07.434,DTA,1,1.82,18.2,0.0,7.32,211.0,0.02,5.52,0.3623188405797102,0,No Error: Everything is OK,DTA;1;182;182;0;732;2110;2;552;0;!
+2026-02-18 09:02:08.438,DTA,2,1.82,23.3,0.0,7.32,215.7,0.0,5.5,0.0,0,No Error: Everything is OK,DTA;2;182;233;0;732;2157;0;550;0;!
+2026-02-18 09:02:09.438,DTA,3,1.82,19.1,0.0,7.32,222.9,0.02,5.52,0.3623188405797102,0,No Error: Everything is OK,DTA;3;182;191;0;732;2229;2;552;0;!
+2026-02-18 09:02:10.440,DTA,4,1.82,23.6,0.0,7.32,216.4,0.0,5.5,0.0,0,No Error: Everything is OK,DTA;4;182;236;0;732;2164;0;550;0;!
+2026-02-18 09:02:11.439,DTA,5,1.82,22.9,0.0,7.32,212.1,0.01,5.51,0.18148820326678766,0,No Error: Everything is OK,DTA;5;182;229;0;732;2121;1;551;0;!

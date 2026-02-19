@@ -49,7 +49,7 @@ class ConnectionPanel(QGroupBox):
         self.connect_btn.clicked.connect(self.connect_clicked.emit)
         button_layout.addWidget(self.connect_btn)
         
-        self.list_ports_btn = QPushButton("🔍 Detect Ports")
+        self.list_ports_btn = QPushButton("Detect Ports")
         self.list_ports_btn.setToolTip("Scan for available COM ports and select one")
         self.list_ports_btn.clicked.connect(self.detect_ports_clicked.emit)
         button_layout.addWidget(self.list_ports_btn)
